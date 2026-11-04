@@ -1,4 +1,5 @@
 using Npgsql;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Edm.Identity.Infrastructure;
 

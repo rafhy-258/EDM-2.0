@@ -2,6 +2,7 @@ using Edm.SharedKernel.Errors;
 using Edm.Web.Http;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 
 namespace Edm.Web.Authentication;
