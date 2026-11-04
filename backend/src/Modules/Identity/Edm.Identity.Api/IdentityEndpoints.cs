@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Edm.Audit.Application;
 using Edm.Audit.Domain;
 using Edm.Identity.Application;
@@ -91,11 +92,23 @@ public static class IdentityEndpoints
     {
         var group = app.MapGroup("/api/v1/auth").WithTags("Identity");
 
-        group.MapPost("/sign-in", async (HttpContext http, SignInRequest? body, SignInService signIn, CancellationToken cancellationToken) =>
+        // The body is read here, not bound by the framework, so the JSON check runs first and a form post gets 415.
+        group.MapPost("/sign-in", async (HttpContext http, SignInService signIn, CancellationToken cancellationToken) =>
             {
                 if (!JsonRequest.IsJson(http.Request))
                 {
                     return Results.StatusCode(StatusCodes.Status415UnsupportedMediaType);
+                }
+
+                SignInRequest? body;
+                try
+                {
+                    body = await JsonSerializer.DeserializeAsync<SignInRequest>(
+                        http.Request.Body, JsonSerializerOptions.Web, cancellationToken);
+                }
+                catch (JsonException)
+                {
+                    body = null;
                 }
 
                 var username = body?.Username;

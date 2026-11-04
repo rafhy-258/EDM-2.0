@@ -105,7 +105,8 @@ public sealed class SignInServiceTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(0, user.FailedSignIns);
-        Assert.Equal(1, rig.Store.SavedStates);
+        // One save for the failed attempt and one for the successful sign-in.
+        Assert.Equal(2, rig.Store.SavedStates);
     }
 
     [Fact]
