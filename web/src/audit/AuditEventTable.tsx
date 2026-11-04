@@ -78,11 +78,12 @@ export function AuditEventTable({
     },
   ];
 
+  // Keep the same row array while the events are the same. A new array on every render makes the table loop.
+  const tableData = useMemo(() => [...events], [events]);
+
   // TanStack Table returns functions that cannot be memoised safely by React Compiler, so the
   // hook result is used directly in this component (same as DataTable).
   // eslint-disable-next-line react-hooks/incompatible-library
-  // Keep the same row array while the events are the same. A new array on every render makes the table loop.
-  const tableData = useMemo(() => [...events], [events]);
   const table = useReactTable({
     data: tableData,
     columns,
