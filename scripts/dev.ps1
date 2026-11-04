@@ -72,11 +72,16 @@ if ($PgDatabase -notmatch '^[a-z_][a-z0-9_]{0,62}$') {
 }
 
 # Run dotnet from backend\ so that global.json (SDK 10.0.x) is picked up.
+# The output is captured before the exit code is read. Piping a native command straight into Select-Object
+# can stop it early and leave $LASTEXITCODE wrong (Windows PowerShell 5.1).
+$sdkVersion = $null
 Push-Location $backendDir
-$sdkVersion = (& dotnet --version | Select-Object -First 1)
-$sdkExit = $LASTEXITCODE
+if (Get-Command dotnet -ErrorAction SilentlyContinue) {
+    $sdkOutput = & dotnet --version 2>&1
+    if ($LASTEXITCODE -eq 0) { $sdkVersion = ($sdkOutput | Select-Object -First 1) }
+}
 Pop-Location
-if ($sdkExit -ne 0 -or -not $sdkVersion) {
+if (-not $sdkVersion) {
     Stop-Script 'The .NET SDK was not found. Install the .NET 10 SDK, then open a new PowerShell window.'
 }
 if (-not $sdkVersion.StartsWith('10.')) {
@@ -84,8 +89,12 @@ if (-not $sdkVersion.StartsWith('10.')) {
 }
 Write-Host "  .NET SDK $sdkVersion"
 
-$nodeVersion = (& node --version | Select-Object -First 1)
-if ($LASTEXITCODE -ne 0 -or -not $nodeVersion) {
+$nodeVersion = $null
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    $nodeOutput = & node --version 2>&1
+    if ($LASTEXITCODE -eq 0) { $nodeVersion = ($nodeOutput | Select-Object -First 1) }
+}
+if (-not $nodeVersion) {
     Stop-Script 'Node.js was not found. Install Node.js 22 LTS, then open a new PowerShell window.'
 }
 Write-Host "  Node.js $nodeVersion"
