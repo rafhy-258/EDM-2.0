@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tan
 import { useMemo, useState, type ReactElement } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuditActivityPage } from '../audit/AuditActivityPage';
+import { CategoriesPage } from '../configuration/CategoriesPage';
+import { SubcategoriesPage } from '../configuration/SubcategoriesPage';
 import { ApiError } from '../api/apiError';
 import { AppShell, type DevRoleControl } from '../components/AppShell';
 import { ErrorState, LoadingState, NoPermissionState } from '../components/StateViews';
@@ -142,6 +144,12 @@ function GuardedPage({ item }: { readonly item: NavItemDef }) {
   }
   if (item.id === 'activity-logs') {
     return <AuditActivityPage />;
+  }
+  if (item.id === 'categories') {
+    return <CategoriesPage />;
+  }
+  if (item.id === 'subcategories') {
+    return <SubcategoriesPage />;
   }
   return <PlaceholderPage item={item} />;
 }
