@@ -16,7 +16,7 @@ Goal: a secure, observable, tested skeleton on which every later module is built
 | 2 | Component library decision as ADR, design system base | ADR-0003, section 5 | Decision recorded. Design-system primitives built in the web shell. |
 | 3 | Authentication: local accounts, SSO skeleton (OIDC, SAML), MFA hooks, lockout, session timeout | ADR-0006, section 7 | Deny-by-default authentication built; no sign-in provider yet (SSO pending Q25). Lockout and session timeout not started. |
 | 4 | Organisation and identity: users, departments, branches, hierarchy, Department Head mapping, roles, permissions, seeds from Part 20, CSV or API import | Section 7 | Not started. Permission catalogue (49 strings) and matrix are in place. |
-| 5 | Audit store with one write service, basic viewer | ADR-0005, section 8 | Built: append-only store, AuditWriter, viewer API. Viewer UI pending. |
+| 5 | Audit store with one write service, basic viewer | ADR-0005, section 8 | Built: append-only store, AuditWriter, viewer API, and the Activity Logs viewer screen at `/audit/activity` (web). Export not built. |
 | 6 | API conventions: ProblemDetails, error catalogue, paging, ETag and If-Match, Idempotency-Key, OpenAPI with permission per endpoint | ADR-0007, section 9 | ProblemDetails, error catalogue, paging and permission declaration built. ETag and Idempotency-Key not started. |
 | 7 | Logging, correlation ids, health checks, CI (build, test, lint, dependency and licence scan), Docker Compose, seed data, README | Section 10 | Logging, correlation ids, health checks and backend-ci built. Docker Compose and seed data not started. |
 
@@ -144,8 +144,9 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 - `audit_events` table with the Part 10.1 fields, indexed on tenant plus timestamp, actor, module, and entity.
 - Single write service `IAuditWriter`. No module writes audit rows directly.
 - Application role has insert and select only. A trigger blocks update and delete.
-- Viewer: global list with filters (date range, user, department, module, action, record, outcome), detail with before and after diff, export to CSV and Excel. Viewing the audit store is itself an audit event.
-- Phase 0 viewer covers user and department changes, which are the Phase 0 "Done when" examples.
+- Viewer: global list with filters (date range, module, action, entity type, entity id, outcome), server-side paging, and a detail dialog with the field changes. Built in Phase 0.
+- Not built yet: filters by user and department, and export to CSV and Excel. Viewing the audit store is itself an audit event, and that is built.
+- The Phase 0 "Done when" example (user and department changes) needs the identity module, which is not built. The viewer will show those events once they are written.
 
 ---
 
@@ -168,7 +169,7 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 - **Health checks:** `/health/live` and `/health/ready`, including the database and outbox worker when those exist.
 - **CI (GitHub Actions):**
   - `web-ci.yml` (buildable now): install, typecheck, lint, unit tests, production build, licence report.
-  - `backend-ci.yml` (after section 2 is resolved): restore, build with warnings as errors, unit tests, architecture tests, integration tests with Testcontainers, dependency vulnerability scan, licence scan, SBOM generation.
+  - `backend-ci.yml` (green on the branch head): restore, build with warnings as errors, unit tests, architecture tests, and integration tests against real PostgreSQL (`EDM_TEST_POSTGRES` locally, Testcontainers in CI). NuGet vulnerability audit at `high` fails the build. Backend licence scan and SBOM generation are not built yet.
 - **Docker Compose:** PostgreSQL service and app service, with the app image built from a multi-stage Dockerfile. Needs Docker, so it is not testable here.
 - **One-command start:** `make dev` (or equivalent) starts PostgreSQL, runs migrations and seed, then starts the API and web dev server. Written in Phase 0 once the backend exists.
 - **Seed data:** PKR currency with rate 1, the permission catalogue, the six roles, the CAPEX eligibility default (Admin, Information Technology, Digital) as a Phase 1D seed, and development users (development profile only).
@@ -179,12 +180,12 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 
 | Done criterion | Status |
 |---|---|
-| A user can sign in | **Not met.** No sign-in provider yet (SSO choice pending Q25). Deny-by-default is built, so nobody can sign in until a provider is added. The web shell has a sign-in placeholder. |
+| A user can sign in | **Not met.** No sign-in provider yet (SSO choice pending Q25). Deny-by-default is built, so nobody can sign in until a provider is added. The web shell has a sign-in placeholder. Blocked on Q25, which needs the product owner's decision. |
 | The menu shows only what the role permits | **Partly met.** Built and tested in the web shell with fixture permissions. Not yet driven by the server session, which needs sign-in. |
-| Creating or changing a user or department writes a correct audit event visible in the viewer | **Partly met.** The audit store, writer and viewer API are built and tested. The viewer screen is not built, and user and department changes are not built (identity module not started). |
+| Creating or changing a user or department writes a correct audit event visible in the viewer | **Partly met.** The audit store, writer, viewer API and the Activity Logs screen are built and tested. User and department changes are not built (identity module not started), so no user or department event exists to show yet. |
 | A test proves every endpoint declares a permission | **Met** for the endpoints that exist (`Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_health_probe`). It must be kept as new endpoints arrive. |
 | CI is green | **Met** for `web-ci` and `backend-ci` on the current head of the branch. |
-| One command starts everything locally | **Not met.** The web dev server starts with `npm run dev`. The API starts with `dotnet run`, but PostgreSQL setup is manual. `deploy/docker-compose.yml` is not written, and Docker has not been verified. |
+| One command starts everything locally | **Not met.** The web dev server starts with `npm run dev`. The API starts with `dotnet run`, but PostgreSQL setup is manual. A one-command start is in progress. `deploy/docker-compose.yml` is not written, and Docker has not been verified. |
 
 ---
 

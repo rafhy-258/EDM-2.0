@@ -14,8 +14,8 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 | Permission matrix (Part 20) | Drafted (`docs/permission-matrix.md`) |
 | Phase 1A data-model design note | Drafted, awaiting approval (`docs/phase-1a/data-model-design-note.md`) |
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |
-| Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, tests |
-| Backend (`backend/`) | Built: shared kernel, deny-by-default auth, Audit module (store, writer, viewer API), Host. CI green (17 integration, 36 unit, 5 architecture tests). Sign-in not yet built. |
+| Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, Activity Logs viewer (`/audit/activity`), tests |
+| Backend (`backend/`) | Built: shared kernel, deny-by-default auth, Audit module (store, writer, viewer API), Host. CI green (17 integration, 36 unit, 5 architecture tests). Sign-in and identity module not yet built. |
 | Database migrations | Not started (Phase 1A, after approval) |
 
 No business module (currency, categories, routing, requests) is built yet. Phase 0 is in progress; see the done-criteria table in the design note, section 11.
