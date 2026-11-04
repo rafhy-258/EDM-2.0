@@ -154,6 +154,7 @@ if (-not $psql) {
     if ($candidate) { $psql = $candidate.FullName }
 }
 
+$accountCount = -1
 if ($psql -and $password) {
     $env:PGPASSWORD = $password
     try {
@@ -169,6 +170,9 @@ if ($psql -and $password) {
         else {
             Write-Host "  Database $PgDatabase exists"
         }
+        # Count the sign-in accounts so a new database can get its first administrator. The table may not exist yet.
+        $countText = (& $psql -h $PgHost -p $PgPort -U $PgUser -d $PgDatabase -tAc "SELECT CASE WHEN to_regclass('identity_users') IS NULL THEN 0 ELSE (SELECT count(*) FROM identity_users) END")
+        if ($LASTEXITCODE -eq 0 -and "$countText".Trim() -match '^[0-9]+$') { $accountCount = [int]"$countText".Trim() }
     }
     finally {
         Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
@@ -177,6 +181,44 @@ if ($psql -and $password) {
 elseif (-not $psql) {
     Write-Host "  psql.exe not found. The database '$PgDatabase' must already exist."
     Write-Host "  If it does not, create it in pgAdmin, or run: CREATE DATABASE $PgDatabase;"
+}
+
+# ---- 3b. First administrator (local sign-in) --------------------------------------------
+
+# The API creates the first administrator at startup, but only on a database with no accounts (ADR-0006).
+# The password is kept in this process's environment only until the API has started, and is never written to disk.
+$bootstrapFromScript = $false
+if ($env:Identity__Bootstrap__Username) {
+    Write-Host '  First administrator: taken from Identity__Bootstrap__Username in this window.'
+}
+elseif ($accountCount -eq 0) {
+    Write-Step 'Creating the first administrator account'
+    Write-Host '  No sign-in accounts exist yet. This account signs in to the EDM web app.'
+    Write-Host '  It gets the System Administrator and Auditor roles, so every screen can be checked.'
+    $adminName = Read-Host '  Administrator username (3 to 64 characters: letters, digits, dot, underscore, hyphen) [admin]'
+    if ([string]::IsNullOrWhiteSpace($adminName)) { $adminName = 'admin' }
+    $secureAdmin = Read-Host '  Administrator password (at least 12 characters, typing is hidden)' -AsSecureString
+    $bstrAdmin = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureAdmin)
+    try {
+        $adminPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstrAdmin)
+    }
+    finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstrAdmin)
+    }
+    if ([string]::IsNullOrEmpty($adminPassword) -or $adminPassword.Length -lt 12) {
+        Stop-Script 'The administrator password must be at least 12 characters.'
+    }
+    $env:Identity__Bootstrap__Username = $adminName.Trim()
+    $env:Identity__Bootstrap__Password = $adminPassword
+    $adminPassword = $null
+    $bootstrapFromScript = $true
+}
+elseif ($accountCount -lt 0) {
+    Write-Host '  Could not check for sign-in accounts (psql not available).'
+    Write-Host '  If none exist yet, set Identity__Bootstrap__Username and Identity__Bootstrap__Password first.'
+}
+else {
+    Write-Host "  $accountCount sign-in account(s) exist. No administrator is created."
 }
 
 # ---- 4. Start the API -----------------------------------------------------------------------
@@ -202,6 +244,12 @@ $api = Start-Process -FilePath 'dotnet' `
     -RedirectStandardOutput $apiLog `
     -RedirectStandardError $apiErrLog `
     -PassThru -WindowStyle Hidden
+
+# The API process has its copy of the administrator password now. Drop this window's copy.
+if ($bootstrapFromScript) {
+    Remove-Item Env:Identity__Bootstrap__Password -ErrorAction SilentlyContinue
+    Remove-Item Env:Identity__Bootstrap__Username -ErrorAction SilentlyContinue
+}
 
 $ready = $false
 $deadline = (Get-Date).AddMinutes(5)
@@ -248,5 +296,6 @@ finally {
     if (-not $connectionFromWindow) { Remove-Item Env:ConnectionStrings__Edm -ErrorAction SilentlyContinue }
     Remove-Item Env:Database__MigrateOnStartup -ErrorAction SilentlyContinue
     Remove-Item Env:EDM_API_ORIGIN -ErrorAction SilentlyContinue
+    Remove-Item Env:Identity__Bootstrap__Password -ErrorAction SilentlyContinue
     Write-Host 'Stopped.'
 }

@@ -12,12 +12,23 @@ using Microsoft.Extensions.Options;
 namespace Edm.IntegrationTests.Support;
 
 /// <summary>
-/// Runs the real host against a test database. Authentication is replaced by a header-driven test scheme:
-///   X-Test-User: a GUID for the signed-in user (omit for anonymous)
-///   X-Test-Permissions: comma-separated permissions
-///   X-Test-Department: optional department name
+/// The first administrator the host creates on a new database. Only used when a test asks for it.
 /// </summary>
-public sealed class EdmApiFactory(string connectionString) : WebApplicationFactory<Program>
+public sealed record BootstrapAccount(string Username, string Password, string Roles);
+
+/// <summary>
+/// Runs the real host against a test database.
+/// Two modes:
+///   - Default: authentication is replaced by a header-driven test scheme:
+///       X-Test-User: a GUID for the signed-in user (omit for anonymous)
+///       X-Test-Permissions: comma-separated permissions
+///       X-Test-Department: optional department name
+///   - useTestAuthentication: false: the real EdmSession cookie scheme runs, so sign-in and the cookie are exercised.
+/// </summary>
+public sealed class EdmApiFactory(
+    string connectionString,
+    bool useTestAuthentication = true,
+    BootstrapAccount? bootstrap = null) : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -25,13 +36,26 @@ public sealed class EdmApiFactory(string connectionString) : WebApplicationFacto
         builder.UseSetting("ConnectionStrings:Edm", connectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
 
-        builder.ConfigureTestServices(services =>
+        // Low iteration count keeps the tests fast. Production uses the configured default.
+        builder.UseSetting("Identity:PasswordIterations", "1000");
+
+        if (bootstrap is not null)
         {
-            // Only authenticate uses the test scheme. Challenge and forbid stay on the production deny-by-default
-            // scheme, so the 401 and 403 responses are the real EDM-AUTH-001 and EDM-AUTH-002 problem responses.
-            services.AddAuthentication(options => options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName)
-                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
-        });
+            builder.UseSetting("Identity:Bootstrap:Username", bootstrap.Username);
+            builder.UseSetting("Identity:Bootstrap:Password", bootstrap.Password);
+            builder.UseSetting("Identity:Bootstrap:Roles", bootstrap.Roles);
+        }
+
+        if (useTestAuthentication)
+        {
+            // Only authenticate uses the test scheme. Challenge and forbid stay on the production session scheme,
+            // so 401 and 403 are the real EDM-AUTH-001 and EDM-AUTH-002 problem responses.
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddAuthentication(options => options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName)
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+            });
+        }
     }
 }
 

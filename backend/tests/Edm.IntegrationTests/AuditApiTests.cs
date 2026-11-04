@@ -15,7 +15,15 @@ namespace Edm.IntegrationTests;
 public sealed class AuditApiTests(PostgresServer server) : IAsyncLifetime
 {
     private const string ListUrl = "/api/v1/audit-events";
-    private static readonly string[] AnonymousAllowList = ["/health/live", "/health/ready"];
+    // Anonymous by design: the health probes, and the three sign-in endpoints (ADR-0006, owner approval pending).
+    private static readonly string[] AnonymousAllowList =
+    [
+        "/health/live",
+        "/health/ready",
+        "/api/v1/auth/sign-in",
+        "/api/v1/auth/sign-out",
+        "/api/v1/auth/session",
+    ];
 
     private PostgresTestDatabase _db = null!;
     private EdmApiFactory _factory = null!;
@@ -127,7 +135,7 @@ public sealed class AuditApiTests(PostgresServer server) : IAsyncLifetime
     }
 
     [Fact]
-    public void Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_health_probe()
+    public void Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_endpoint()
     {
         var endpoints = _factory.Services.GetServices<EndpointDataSource>()
             .SelectMany(source => source.Endpoints)

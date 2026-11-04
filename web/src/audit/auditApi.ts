@@ -1,4 +1,7 @@
+import { ApiError, toApiError } from '../api/apiError';
 import { karachiEndOfDayIso, karachiStartOfDayIso } from './format';
+
+export { ApiError };
 
 /** Shapes returned by GET /api/v1/audit-events (backend AuditEventDto and AuditEventPage). */
 export type AuditOutcome = 'Success' | 'Failure';
@@ -62,17 +65,6 @@ export const EMPTY_AUDIT_FILTERS: AuditFilters = {
 export const AUDIT_PAGE_SIZE = 25;
 
 /** Error returned by the API, with the EDM error code and any field errors (ADR-0007). */
-export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string | null,
-    message: string,
-    readonly fieldErrors: Readonly<Record<string, readonly string[]>> = {},
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
 
 /**
  * Turns the form state into the query string. Empty fields are left out, so the server applies
@@ -119,20 +111,6 @@ export async function fetchAuditEvents(query: string, signal?: AbortSignal): Pro
   return body;
 }
 
-async function toApiError(response: Response): Promise<ApiError> {
-  const body: unknown = await response.json().catch(() => null);
-  const record = isRecord(body) ? body : {};
-  const code = typeof record['code'] === 'string' ? record['code'] : null;
-  const message = typeof record['message'] === 'string' ? record['message'] : 'The request could not be completed.';
-  const errors = isRecord(record['errors']) ? record['errors'] : {};
-  const fieldErrors: Record<string, readonly string[]> = {};
-  for (const [field, messages] of Object.entries(errors)) {
-    if (Array.isArray(messages)) {
-      fieldErrors[field] = messages.filter((m): m is string => typeof m === 'string');
-    }
-  }
-  return new ApiError(response.status, code, message, fieldErrors);
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

@@ -5,7 +5,7 @@ import { App } from './App';
 
 function openAt(path: string) {
   window.history.pushState({}, '', path);
-  return render(<App />);
+  return render(<App devFixtures />);
 }
 
 function selectRole(value: string) {

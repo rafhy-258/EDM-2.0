@@ -23,6 +23,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.ArchitectureTests", "te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.IntegrationTests", "tests\Edm.IntegrationTests\Edm.IntegrationTests.csproj", "{1A000001-0000-4000-8000-00000000000A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Identity.Domain", "src\Modules\Identity\Edm.Identity.Domain\Edm.Identity.Domain.csproj", "{1A000001-0000-4000-8000-00000000000B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Identity.Application", "src\Modules\Identity\Edm.Identity.Application\Edm.Identity.Application.csproj", "{1A000001-0000-4000-8000-00000000000C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Identity.Infrastructure", "src\Modules\Identity\Edm.Identity.Infrastructure\Edm.Identity.Infrastructure.csproj", "{1A000001-0000-4000-8000-00000000000D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Identity.Api", "src\Modules\Identity\Edm.Identity.Api\Edm.Identity.Api.csproj", "{1A000001-0000-4000-8000-00000000000E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +77,22 @@ Global
 		{1A000001-0000-4000-8000-00000000000A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A000001-0000-4000-8000-00000000000A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A000001-0000-4000-8000-00000000000A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

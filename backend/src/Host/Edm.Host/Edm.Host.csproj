@@ -15,6 +15,10 @@
     <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Api\Edm.Audit.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Application\Edm.Audit.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Infrastructure\Edm.Audit.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Api\Edm.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Application\Edm.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Domain\Edm.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Infrastructure\Edm.Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
     <ProjectReference Include="..\..\Shared\Edm.Web\Edm.Web.csproj" />
   </ItemGroup>

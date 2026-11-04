@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Identity.Api</RootNamespace>
+    <Description>Identity HTTP API: sign-in, sign-out and the current session under /api/v1/auth.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Edm.Identity.Application\Edm.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\Audit\Edm.Audit.Application\Edm.Audit.Application.csproj" />
+    <ProjectReference Include="..\..\Audit\Edm.Audit.Domain\Edm.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.Web\Edm.Web.csproj" />
+  </ItemGroup>
+</Project>

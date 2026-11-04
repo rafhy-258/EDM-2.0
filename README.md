@@ -15,7 +15,7 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 | Phase 1A data-model design note | Drafted, awaiting approval (`docs/phase-1a/data-model-design-note.md`) |
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |
 | Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, Activity Logs viewer (`/audit/activity`), tests |
-| Backend (`backend/`) | Built: shared kernel, deny-by-default auth, Audit module (store, writer, viewer API), Host. CI green (17 integration, 36 unit, 5 architecture tests). Sign-in and identity module not yet built. |
+| Backend (`backend/`) | Built: shared kernel, session-cookie authentication, Audit module (store, writer, viewer API), Identity module (local database accounts, sign-in with lockout, first-administrator bootstrap), Host. Sign-in is built but not yet verified by CI or on the owner's machine. SSO waits for Q25. |
 | Database migrations | Audit schema only (Phase 0). Business migrations not started (Phase 1A, after approval) |
 | One-command local start | `scripts/dev.ps1` for Windows PowerShell, with PostgreSQL already running. Not yet run by the agent (no .NET or PowerShell in the sandbox) |
 
@@ -42,7 +42,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1
 
 The `-ExecutionPolicy Bypass` option is needed on a default Windows install, where scripts are blocked. It applies to this run only. The script checks the SDK and Node, installs web packages on first run, asks for the PostgreSQL password (hidden, kept in memory only), creates the `edm` database if it is missing, and starts the API with its database schema applied. Then it starts the web dev server. Open http://localhost:5173. Logs are in `artifacts\local\`. Press Ctrl+C to stop both. Options are listed in the script header (`Get-Help .\scripts\dev.ps1`).
 
-Docker Compose is not written yet, and PostgreSQL itself is not started by the script.
+On a new database the script asks you to create the first administrator account (username, then a hidden password of at least 12 characters). Sign in with that account at http://localhost:5173. The password is never written to disk.
+
+Docker Compose is not written yet, and PostgreSQL itself is not started by the script. Docker is not used on this project.
 
 ## Run the web shell
 
@@ -59,7 +61,7 @@ npm run build
 npm run licences   # production dependency licence allow-list
 ```
 
-In development the header offers a **role switcher** so the menu can be checked for each role in Part 20.2. Production builds never show it and have no session until the backend provides one, so protected screens show the sign-in state.
+Sign in with a local account. In development the sign-in page also offers a **role fixture** (no account needed), and the header shows a role switcher so each role's menu can be checked (Part 20.2). Production builds have no fixture path. The session comes from the server, and without one the sign-in page is shown.
 
 ## Principles that apply to every change
 

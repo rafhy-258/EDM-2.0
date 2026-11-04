@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Identity.Domain</RootNamespace>
+    <Description>Identity domain: user accounts, sign-in lockout, password policy and username rules (ADR-0006).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

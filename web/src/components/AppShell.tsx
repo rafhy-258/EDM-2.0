@@ -93,7 +93,14 @@ export interface DevRoleControl {
  * notifications, profile and tenant context. The navigation shows only what the session permits.
  * `devRole` is only passed in development builds.
  */
-export function AppShell({ devRole }: { readonly devRole?: DevRoleControl }) {
+export function AppShell({
+  devRole,
+  onSignOut,
+}: {
+  readonly devRole?: DevRoleControl;
+  /** Passed only when a session exists. */
+  readonly onSignOut?: () => void;
+}) {
   const styles = useStyles();
   const navigate = useNavigate();
   const location = useLocation();
@@ -149,6 +156,11 @@ export function AppShell({ devRole }: { readonly devRole?: DevRoleControl }) {
               ))}
             </Select>
           </div>
+        ) : null}
+        {onSignOut ? (
+          <Button appearance="subtle" onClick={onSignOut}>
+            Sign out
+          </Button>
         ) : null}
         <Avatar
           name={user?.displayName ?? 'Guest'}

@@ -9,12 +9,27 @@ Specification: [docs/EDM2-Master-Prompt.md](../docs/EDM2-Master-Prompt.md). Phas
 | Part | Where |
 |---|---|
 | Shared kernel: error catalogue (Part 21.3), permission catalogue (Part 20.1, 49 strings), paging, context | `src/Shared/Edm.SharedKernel` |
-| Web adapters: deny-by-default authentication, `[RequiresPermission]`, ProblemDetails, correlation and actor context | `src/Shared/Edm.Web` |
+| Web adapters: session-cookie authentication, `[RequiresPermission]`, ProblemDetails, the JSON check on state-changing auth requests, correlation and actor context | `src/Shared/Edm.Web` |
 | Host: pipeline, Serilog, health checks, OpenAPI (development), optional startup migration | `src/Host/Edm.Host` |
 | Audit module: append-only store, `AuditWriter`, viewer API | `src/Modules/Audit/*` |
-| Endpoints | `GET /api/v1/audit-events` (permission `audit.view`), `GET /health/live`, `GET /health/ready` (anonymous) |
+| Identity module: local accounts (PBKDF2 hashing, lockout), sign-in, sign-out, session, first-administrator bootstrap | `src/Modules/Identity/*` |
+| Endpoints | `GET /api/v1/audit-events` (permission `audit.view`), `POST /api/v1/auth/sign-in`, `POST /api/v1/auth/sign-out`, `GET /api/v1/auth/session` (anonymous, see design note section 7), `GET /health/live`, `GET /health/ready` (anonymous) |
 
-Sign-in is **not** implemented yet. Authentication denies every request until the SSO provider is chosen (Q25). Tests use a test-only header scheme.
+### Local sign-in (ADR-0006)
+
+Accounts live in PostgreSQL. Settings are in the `Identity` section of `appsettings.json`. Any setting can be overridden with an environment variable, for example `Identity__LockoutThreshold`.
+
+| Setting | Default | Notes |
+|---|---|---|
+| `Identity:PasswordIterations` | 600000 | PBKDF2-SHA256 iterations for new hashes. Open as P0-4. |
+| `Identity:MinimumPasswordLength` | 12 | Open as P0-3. |
+| `Identity:LockoutThreshold`, `Identity:LockoutMinutes` | 5, 15 | Open as P0-1. |
+| `Identity:IdleTimeoutMinutes` | 20 | Open as P0-2. |
+| `Identity:Bootstrap:Username`, `Password`, `Roles` | none | Creates the first administrator when the database has no accounts and `Database:MigrateOnStartup` is true. Roles default to `SYSTEM_ADMINISTRATOR,AUDITOR` (P0-7). |
+
+Do not put the bootstrap password in `appsettings.json`. Set it in the environment, or let `scripts/dev.ps1` prompt for it.
+
+Tests use a header-based scheme (`X-Test-User`, `X-Test-Permissions`) for most endpoints. `IdentityApiTests` run the real session cookie against PostgreSQL.
 
 ## Prerequisites
 
@@ -58,7 +73,7 @@ $env:Database__MigrateOnStartup = "true"   # applies the audit schema on start; 
 dotnet run --project src/Host/Edm.Host
 ```
 
-Then open `http://localhost:5000/health/ready` (the port is shown in the console output). `GET /api/v1/audit-events` returns 401 until sign-in exists. That is the intended deny-by-default behaviour.
+Then open `http://localhost:5000/health/ready` (the port is shown in the console output). `GET /api/v1/audit-events` returns 401 until you sign in with `POST /api/v1/auth/sign-in` (JSON body with `username` and `password`). On a new database, set `Identity:Bootstrap:Username` and `Identity:Bootstrap:Password` first, so the first administrator is created.
 
 For one command that starts the API and the web dev server together, run `powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1` from the repository root (see the root README). It needs PostgreSQL already running. A Docker Compose file that also starts PostgreSQL is planned and not yet written.
 

@@ -34,5 +34,5 @@ src/
 - **Server is the authority.** Permission checks here decide what is shown, never what is allowed. Each API call is authorised on the server.
 - **P2 items are never rendered.** `visibleNavigation` removes them and a test asserts it.
 - **Status is never colour alone.** Every badge shows its text label.
-- **Role fixtures are development only.** `devSessionFor` and the role switcher are used only when `import.meta.env.DEV` is true. Production has no session until the backend provides one.
+- **Role fixtures are development only.** `devSessionFor` and the role switcher are used only when `import.meta.env.DEV` is true. Production has no fixture path. The session comes from the server (`GET /api/v1/auth/session`), and without one the sign-in page is shown. The sign-in page and fixture path are covered by `src/pages/SignInPage.test.tsx` and `src/app/SessionFlow.test.tsx`.
 - **No localhost in browser code.** Browser code calls relative `/api` URLs only.

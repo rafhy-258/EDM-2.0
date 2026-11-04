@@ -87,6 +87,7 @@ Planned modules that are **not** created yet: Identity & Organisation, Configura
 | Audit schema through EF Core migrations | Versioned SQL, `Migrations/0001_audit_schema.sql`, applied by `AuditSchemaMigrator` | The append-only trigger and the grants must be exact. EF Core mapping still handles runtime reads and writes. An integration test checks that the mapping and the SQL agree. EF Core migrations are used from Phase 1A onwards. This is recorded in ADR-0005. |
 | Migrations run manually | `Database:MigrateOnStartup` controls a startup migration, default off | Production migrations are a deployment step. Development and tests turn it on. |
 
+- **Local sign-in** uses an in-house PBKDF2-SHA256 hasher and two identity tables, not ASP.NET Core Identity as ADR-0006 says. Reason: no new package, and the identity schema stays under our own migrations. Open as P0-4 (`docs/open-questions.md`, section F).
 ---
 
 ## 4. Component library
@@ -137,6 +138,17 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 
 **Data scope.** Scope values are own, department and all, applied on top of permissions in the query layer (Part 20 preamble).
 
+**Local sign-in (built 04-Nov-2026, not yet verified by CI or on the owner's machine).** The owner asked for database-backed sign-in with no Docker and no cloud. SSO stays blocked on Q25.
+- Tables (migration `0002_identity_schema.sql`): `identity_users` (lower-case username, unique per tenant, PBKDF2 hash, failed sign-in count, lock time) and `identity_user_roles`. The rest of the Part 13 organisation model is not built yet.
+- Password hashing: PBKDF2-HMAC-SHA256, random 16-byte salt, 600,000 iterations, stored with each hash. Written with the .NET built-in primitive, so no package is added. ADR-0006 names ASP.NET Core Identity; this is a deviation, open as P0-4.
+- Lockout: 5 failed sign-ins lock the account for 15 minutes (P0-1). A locked or disabled account is never password-checked. Every refusal returns the same `EDM-AUTH-001` response, so the response does not reveal which accounts exist (P0-6).
+- Session: an HttpOnly, Secure, SameSite=Strict cookie named `edm.session`, with a 20-minute idle timeout that renews on each request (P0-2). Each permission is a claim, so the existing permission policy works unchanged.
+- CSRF: sign-in and sign-out refuse any request that is not `application/json` (415). A cross-site HTML form cannot send that content type without a CORS preflight, and no CORS policy is set.
+- Endpoints: `POST /api/v1/auth/sign-in`, `POST /api/v1/auth/sign-out` and `GET /api/v1/auth/session`. These three are anonymous and declare no permission. They are the only exception to the permission rule, besides the health probes, and need owner approval (P0-5).
+- Audit: `SignIn`, `SignInFailed` (with the reason), `AccountLocked`, `SignOut` and `UserCreated` (module `Identity`). They appear in the Activity Logs viewer.
+- First administrator: on an empty database, when `Database:MigrateOnStartup` is on, the API creates the account from `Identity:Bootstrap:Username` and `Identity:Bootstrap:Password`. Roles come from `Identity:Bootstrap:Roles` (default System Administrator and Auditor, P0-7). `scripts/dev.ps1` prompts for the account on the first run. The password is kept in the API's environment only, and the script removes its copy once the API has started.
+- Not built: creating and editing users on screen, password change and reset, unlock by an administrator, MFA, and OIDC or SAML. These belong to the organisation module and the SSO step (P0-8).
+
 ---
 
 ## 8. Audit store (ADR-0005)
@@ -180,12 +192,12 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 
 | Done criterion | Status |
 |---|---|
-| A user can sign in | **Not met.** No sign-in provider yet (SSO choice pending Q25). Deny-by-default is built, so nobody can sign in until a provider is added. The web shell has a sign-in placeholder. Blocked on Q25, which needs the product owner's decision. |
-| The menu shows only what the role permits | **Partly met.** Built and tested in the web shell with fixture permissions. Not yet driven by the server session, which needs sign-in. |
-| Creating or changing a user or department writes a correct audit event visible in the viewer | **Partly met.** The audit store, writer, viewer API and the Activity Logs screen are built and tested. User and department changes are not built (identity module not started), so no user or department event exists to show yet. |
-| A test proves every endpoint declares a permission | **Met** for the endpoints that exist (`Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_health_probe`). It must be kept as new endpoints arrive. |
+| A user can sign in | **Built, not yet verified.** Database-backed local accounts with a session cookie (section 7). Integration tests cover sign-in, lockout, sign-out and the audit trail. Not yet run by CI or on the owner's machine. SSO is still blocked on Q25. |
+| The menu shows only what the role permits | **Built, web tests pass locally.** The menu is driven by the server session (`GET /api/v1/auth/session`). Development builds can switch to a role fixture for checking. |
+| Creating or changing a user or department | **Partly met.** Sign-in events (`SignIn`, `SignInFailed`, `AccountLocked`, `SignOut`, `UserCreated`) are written and shown in the Activity Logs viewer. User and department changes are not built yet, so no such event exists to show. |
+| A test proves every endpoint declares a permission | **Met** for the endpoints that exist. The three sign-in endpoints are named anonymous exceptions (P0-5). Test: `Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_endpoint`. It must be kept as new endpoints arrive. |
 | CI is green | **Met** for `web-ci` and `backend-ci` on the current head of the branch. |
-| One command starts everything locally | **Partly met.** `scripts/dev.ps1` starts the API (with the audit schema) and the web dev server, given a running PostgreSQL. It is written but not yet run on the owner's machine. It does not start PostgreSQL. `deploy/docker-compose.yml` is not written, and Docker has not been verified. |
+| One command starts everything locally | **Partly met.** `scripts/dev.ps1` starts the API and the web dev server, and on a new database asks for the first administrator. It is not yet run on the owner's machine. It does not start PostgreSQL. `deploy/docker-compose.yml` is not written, and Docker is skipped at the owner's request. |
 
 ---
 
@@ -211,6 +223,8 @@ The full question batch is in [docs/open-questions.md](../open-questions.md). Ph
 
 ## 14. Recommended next step
 
-1. The product owner names the SSO provider for Q25. Sign-in is built after that. Until then it is blocked.
-2. The product owner confirms the database password was changed and the PowerShell history line was removed. It must not be pasted into chat.
-3. Phase 1A starts only after its own design note is approved and the 1A questions are answered (docs/phase-1a/data-model-design-note.md).
+1. The owner runs the backend tests and `scripts/dev.ps1` on the Windows machine, then signs in with the first administrator account. The checklist is in the chat summary of 04-Nov-2026.
+2. The owner answers P0-1 to P0-8 in `docs/open-questions.md`, section F. Any value changed there changes the defaults in `IdentityOptions` and the web text.
+3. The owner names the SSO provider (Q25). SSO is built after that. Local accounts stay as the fallback.
+4. The owner rotates the PostgreSQL password and removes the PowerShell history line. The password must not be pasted into chat.
+5. Phase 1A starts only after its own design note is approved and the 1A questions are answered (`docs/phase-1a/data-model-design-note.md`).

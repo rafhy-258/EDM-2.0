@@ -15,5 +15,8 @@
     <ProjectReference Include="..\..\src\Shared\Edm.Web\Edm.Web.csproj" />
     <ProjectReference Include="..\..\src\Modules\Audit\Edm.Audit.Domain\Edm.Audit.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Audit\Edm.Audit.Application\Edm.Audit.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Edm.Identity.Domain\Edm.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Edm.Identity.Application\Edm.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Edm.Identity.Infrastructure\Edm.Identity.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

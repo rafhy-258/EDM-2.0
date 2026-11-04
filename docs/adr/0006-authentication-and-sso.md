@@ -15,3 +15,10 @@
 
 ## Consequences
 - The Phase 0 SSO skeleton is testable with a local OIDC test server. The real provider is configured per deployment through environment variables.
+
+## Implementation note (04-Nov-2026)
+- Local sign-in is built now, on database-backed accounts. The owner asked for it with no Docker and no cloud. SSO (OIDC, SAML) waits for Q25.
+- Password hashing is an in-house PBKDF2-SHA256 hasher, not ASP.NET Core Identity as written above. Open as P0-4.
+- Sessions are the `edm.session` cookie (HttpOnly, Secure, SameSite=Strict) with an idle timeout. State-changing auth requests must be `application/json`, which is the CSRF control.
+- Lockout (5 failures, 15 minutes), the 20-minute idle timeout and the 12-character minimum are PROPOSED values (P0-1 to P0-3). The Master Prompt does not set them.
+- Local accounts are the primary path while SSO is pending. The Master Prompt describes them as a fallback. The owner's instruction applies until SSO is built.

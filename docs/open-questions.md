@@ -103,6 +103,14 @@ Reply with the item number and your answer, for example: `1: level numbers carry
 | F-2 | **Policy-version and maker-checker design.** Approve ADR-0010 (stage and apply on approval). | Proposed. **Approved by the product owner, 04-Nov-2026.** |
 | F-3 | **Digit grouping default.** International (1,000,000) or lakh and crore (10,00,000) for the default display? | International. User-selectable as specified. |
 | F-4 | **SAML library.** Shortlist and licence approval for the SAML library (ADR-0006). | Evaluated during Phase 0. No commercial-only licence without approval. |
+| P0-1 | **Lockout.** How many failed sign-ins lock an account, and for how long. (Not in the Master Prompt.) | 5 failed sign-ins lock the account for 15 minutes. A successful sign-in clears the count. |
+| P0-2 | **Session idle timeout.** (Not in the Master Prompt.) | 20 minutes without a request ends the session. Each request renews it. No absolute limit. |
+| P0-3 | **Password policy.** (Not in the Master Prompt.) | At least 12 characters. Must not contain the username. No forced expiry or composition rules. |
+| P0-4 | **Password hashing.** ADR-0006 names ASP.NET Core Identity. Phase 0 uses an in-house PBKDF2-SHA256 hasher (600,000 iterations) to avoid a new package. | Keep the in-house hasher. Switch to ASP.NET Core Identity if preferred; the account tables would change. |
+| P0-5 | **Anonymous endpoints.** Sign-in, sign-out and session declare no permission, because no user holds a permission before signing in. ADR-0007 and Part 20 say every endpoint declares one. | Allowed as a named exception, with the health probes. A test lists the exceptions. |
+| P0-6 | **Locked-account message.** Part 21.3 has no code for a locked account. A separate code would tell a caller that the account exists. | One response (EDM-AUTH-001) for every refusal. A separate code needs a Change Request. |
+| P0-7 | **First administrator roles.** The account is created from configuration on an empty database. | System Administrator and Auditor, so that every screen and the audit viewer can be checked. |
+| P0-8 | **Account administration.** Creating, disabling, unlocking and resetting passwords need the Users screen, which is not built. Until then the first administrator is the only account. | Acceptable for Phase 0 sign-in. The Users screen belongs to the organisation module. |
 
 ---
 

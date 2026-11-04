@@ -2,6 +2,10 @@ using Edm.Audit.Api;
 using Edm.Audit.Application;
 using Edm.Audit.Infrastructure;
 using Edm.Host.Health;
+using Edm.Identity.Api;
+using Edm.Identity.Application;
+using Edm.Identity.Domain;
+using Edm.Identity.Infrastructure;
 using Edm.Host.Middleware;
 using Edm.SharedKernel.Context;
 using Edm.Web.Authentication;
@@ -12,6 +16,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Events;
@@ -45,10 +51,12 @@ builder.Services.AddSingleton<ITenantContext>(new FixedTenantContext(tenantId));
 builder.Services.AddScoped<IActorContext, HttpActorContext>();
 builder.Services.AddScoped<ICorrelationIdAccessor, HttpCorrelationIdAccessor>();
 
-// Deny by default (ADR-0006). No sign-in until SSO is configured. Every endpoint needs a permission or AllowAnonymous.
+// Local accounts with a session cookie (ADR-0006). A request without a valid session is denied. Every endpoint
+// needs a permission, or is one of the explicit anonymous endpoints (sign-in, sign-out, session, health).
+var identityOptions = builder.Configuration.GetSection("Identity").Get<IdentityOptions>() ?? new IdentityOptions();
 builder.Services
-    .AddAuthentication(EdmAuthenticationDefaults.Scheme)
-    .AddScheme<AuthenticationSchemeOptions, DenyByDefaultAuthenticationHandler>(EdmAuthenticationDefaults.Scheme, _ => { });
+    .AddAuthentication(EdmAuthenticationDefaults.SessionScheme)
+    .AddEdmSession(TimeSpan.FromMinutes(identityOptions.IdleTimeoutMinutes));
 
 builder.Services.AddAuthorization(options =>
 {
@@ -60,6 +68,8 @@ builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHand
 // Modules.
 builder.Services.AddAuditInfrastructure(connectionString);
 builder.Services.AddAuditApplication();
+builder.Services.AddIdentityInfrastructure(connectionString);
+builder.Services.AddIdentityApplication(identityOptions);
 
 // Health (Part 2, observability).
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: new[] { "ready" });
@@ -80,6 +90,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check 
     .AllowAnonymous();
 
 app.MapAuditEndpoints();
+app.MapIdentityEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
@@ -89,6 +100,12 @@ if (app.Environment.IsDevelopment())
 if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
     await app.Services.GetRequiredService<AuditSchemaMigrator>().MigrateAsync(CancellationToken.None);
+    await app.Services.GetRequiredService<IdentitySchemaMigrator>().MigrateAsync(CancellationToken.None);
+
+    // Creates the first administrator on a new database. Does nothing when an account already exists.
+    using var bootstrapScope = app.Services.CreateScope();
+    await bootstrapScope.ServiceProvider.GetRequiredService<BootstrapAdministrator>()
+        .EnsureAsync(identityOptions.Bootstrap, CancellationToken.None);
 }
 
 app.Run();

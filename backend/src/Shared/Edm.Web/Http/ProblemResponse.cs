@@ -19,6 +19,7 @@ public static class ProblemResponse
 {
     public const string ProblemJsonContentType = "application/problem+json";
 
+    /// <summary>Writes the problem to the response. Used by the authentication events.</summary>
     public static Task WriteAsync(
         HttpContext context,
         EdmErrorDefinition error,
@@ -27,6 +28,29 @@ public static class ProblemResponse
         context.Response.StatusCode = error.HttpStatus;
         context.Response.ContentType = ProblemJsonContentType;
 
+        // WriteAsJsonAsync would replace the content type with application/json, so the type is passed explicitly.
+        return context.Response.WriteAsJsonAsync(
+            Body(context, error, fieldErrors),
+            options: null,
+            contentType: ProblemJsonContentType,
+            cancellationToken: context.RequestAborted);
+    }
+
+    /// <summary>The same problem as an endpoint result, for minimal API handlers.</summary>
+    public static IResult Result(
+        HttpContext context,
+        EdmErrorDefinition error,
+        IReadOnlyDictionary<string, string[]>? fieldErrors = null)
+        => Results.Json(
+            data: Body(context, error, fieldErrors),
+            contentType: ProblemJsonContentType,
+            statusCode: error.HttpStatus);
+
+    private static Dictionary<string, object?> Body(
+        HttpContext context,
+        EdmErrorDefinition error,
+        IReadOnlyDictionary<string, string[]>? fieldErrors)
+    {
         var body = new Dictionary<string, object?>
         {
             ["type"] = $"urn:edm:error:{error.Code}",
@@ -43,11 +67,6 @@ public static class ProblemResponse
             body["errors"] = fieldErrors;
         }
 
-        // WriteAsJsonAsync would replace the content type with application/json, so the type is passed explicitly.
-        return context.Response.WriteAsJsonAsync(
-            body,
-            options: null,
-            contentType: ProblemJsonContentType,
-            cancellationToken: context.RequestAborted);
+        return body;
     }
 }

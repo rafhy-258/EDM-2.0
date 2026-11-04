@@ -14,7 +14,7 @@ describe('Activity Logs route', () => {
     );
     window.history.pushState({}, '', '/audit/activity');
 
-    render(<App />);
+    render(<App devFixtures />);
     fireEvent.change(screen.getByRole('combobox', { name: 'Development role' }), { target: { value: 'AUDITOR' } });
 
     expect(await screen.findByRole('heading', { name: 'Activity Logs', level: 1 })).toBeInTheDocument();
