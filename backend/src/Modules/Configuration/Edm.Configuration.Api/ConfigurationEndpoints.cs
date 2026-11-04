@@ -1,7 +1,8 @@
 using Edm.Configuration.Application.Catalogue;
 using Edm.Web.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace Edm.Configuration.Api;
