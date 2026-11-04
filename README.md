@@ -16,7 +16,8 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |
 | Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, Activity Logs viewer (`/audit/activity`), tests |
 | Backend (`backend/`) | Built: shared kernel, deny-by-default auth, Audit module (store, writer, viewer API), Host. CI green (17 integration, 36 unit, 5 architecture tests). Sign-in and identity module not yet built. |
-| Database migrations | Not started (Phase 1A, after approval) |
+| Database migrations | Audit schema only (Phase 0). Business migrations not started (Phase 1A, after approval) |
+| One-command local start | `scripts/dev.ps1` for Windows PowerShell, with PostgreSQL already running. Not yet run by the agent (no .NET or PowerShell in the sandbox) |
 
 No business module (currency, categories, routing, requests) is built yet. Phase 0 is in progress; see the done-criteria table in the design note, section 11.
 
@@ -30,6 +31,18 @@ backend/      .NET 10 solution: shared kernel, web adapters, host, Audit module,
 ```
 
 The backend solution layout is in `docs/phase-0/design-note.md`, section 3. Backend setup and local checks are in `backend/README.md`.
+
+## Run everything locally (Windows, PowerShell)
+
+Requires the .NET 10 SDK, Node.js 22 or later, and PostgreSQL 18 running on this machine. Docker is not used.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1
+```
+
+The `-ExecutionPolicy Bypass` option is needed on a default Windows install, where scripts are blocked. It applies to this run only. The script checks the SDK and Node, installs web packages on first run, asks for the PostgreSQL password (hidden, kept in memory only), creates the `edm` database if it is missing, and starts the API with its database schema applied. Then it starts the web dev server. Open http://localhost:5173. Logs are in `artifacts\local\`. Press Ctrl+C to stop both. Options are listed in the script header (`Get-Help .\scripts\dev.ps1`).
+
+Docker Compose is not written yet, and PostgreSQL itself is not started by the script.
 
 ## Run the web shell
 

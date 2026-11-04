@@ -60,7 +60,7 @@ dotnet run --project src/Host/Edm.Host
 
 Then open `http://localhost:5000/health/ready` (the port is shown in the console output). `GET /api/v1/audit-events` returns 401 until sign-in exists. That is the intended deny-by-default behaviour.
 
-A one-command start that also starts PostgreSQL (`deploy/docker-compose.yml`) is planned and not yet written. It needs Docker, which has not been verified.
+For one command that starts the API and the web dev server together, run `powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1` from the repository root (see the root README). It needs PostgreSQL already running. A Docker Compose file that also starts PostgreSQL is planned and not yet written.
 
 ## Rules that apply to every change
 

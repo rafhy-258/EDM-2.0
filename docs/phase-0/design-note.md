@@ -171,7 +171,7 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
   - `web-ci.yml` (buildable now): install, typecheck, lint, unit tests, production build, licence report.
   - `backend-ci.yml` (green on the branch head): restore, build with warnings as errors, unit tests, architecture tests, and integration tests against real PostgreSQL (`EDM_TEST_POSTGRES` locally, Testcontainers in CI). NuGet vulnerability audit at `high` fails the build. Backend licence scan and SBOM generation are not built yet.
 - **Docker Compose:** PostgreSQL service and app service, with the app image built from a multi-stage Dockerfile. Needs Docker, so it is not testable here.
-- **One-command start:** `make dev` (or equivalent) starts PostgreSQL, runs migrations and seed, then starts the API and web dev server. Written in Phase 0 once the backend exists.
+- **One-command start:** `scripts/dev.ps1` (Windows PowerShell) checks the SDK and Node, installs web packages on first run, asks for the database password (kept in memory only), creates the database if it is missing, starts the API with the audit schema applied (`Database:MigrateOnStartup`), and starts the web dev server. It needs PostgreSQL already running. Docker Compose, which would also start PostgreSQL, is not written. Seed data is not part of Phase 0 (the PKR seed belongs to Phase 1A).
 - **Seed data:** PKR currency with rate 1, the permission catalogue, the six roles, the CAPEX eligibility default (Admin, Information Technology, Digital) as a Phase 1D seed, and development users (development profile only).
 
 ---
@@ -185,7 +185,7 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 | Creating or changing a user or department writes a correct audit event visible in the viewer | **Partly met.** The audit store, writer, viewer API and the Activity Logs screen are built and tested. User and department changes are not built (identity module not started), so no user or department event exists to show yet. |
 | A test proves every endpoint declares a permission | **Met** for the endpoints that exist (`Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_health_probe`). It must be kept as new endpoints arrive. |
 | CI is green | **Met** for `web-ci` and `backend-ci` on the current head of the branch. |
-| One command starts everything locally | **Not met.** The web dev server starts with `npm run dev`. The API starts with `dotnet run`, but PostgreSQL setup is manual. A one-command start is in progress. `deploy/docker-compose.yml` is not written, and Docker has not been verified. |
+| One command starts everything locally | **Partly met.** `scripts/dev.ps1` starts the API (with the audit schema) and the web dev server, given a running PostgreSQL. It is written but not yet run on the owner's machine. It does not start PostgreSQL. `deploy/docker-compose.yml` is not written, and Docker has not been verified. |
 
 ---
 
