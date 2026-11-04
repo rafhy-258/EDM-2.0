@@ -40,7 +40,7 @@ builder.Services.AddExceptionHandler<EdmExceptionHandler>();
 
 // Context used by audit and authorisation.
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddSingleton<IClock, Edm.SharedKernel.Context.SystemClock>();
 builder.Services.AddSingleton<ITenantContext>(new FixedTenantContext(tenantId));
 builder.Services.AddScoped<IActorContext, HttpActorContext>();
 builder.Services.AddScoped<ICorrelationIdAccessor, HttpCorrelationIdAccessor>();
