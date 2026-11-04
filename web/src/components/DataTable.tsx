@@ -17,7 +17,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { EmptyState, ErrorState, LoadingState } from './StateViews';
 
 /**
@@ -51,12 +51,17 @@ export function DataTable<T>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pageIndex, setPageIndex] = useState(0);
 
+  // A new array on every render makes TanStack Table reset the page on every render, which loops and freezes the
+  // page. Keep the same array while the data is the same.
+  const tableData = useMemo(() => [...(data ?? [])], [data]);
+
   // TanStack Table returns functions that cannot be memoised safely by React Compiler, so the
   // hook result is used directly in this component.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: [...(data ?? [])],
+    data: tableData,
     columns,
+    autoResetPageIndex: false,
     state: { sorting, pagination: { pageIndex, pageSize } },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
