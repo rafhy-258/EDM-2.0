@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Audit.Infrastructure</RootNamespace>
+    <Description>Audit persistence on PostgreSQL: EF Core mapping, the append-only SQL migration, and the schema migrator.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- SQL migrations are embedded by file name, for example 0001_audit_schema.sql. -->
+    <EmbeddedResource Include="Migrations\*.sql" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Edm.Audit.Application\Edm.Audit.Application.csproj" />
+    <ProjectReference Include="..\Edm.Audit.Domain\Edm.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

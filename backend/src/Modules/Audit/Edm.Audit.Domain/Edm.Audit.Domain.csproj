@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Audit.Domain</RootNamespace>
+    <Description>Audit domain: the immutable audit event and the field-level difference (Part 10.1).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.SharedKernel</RootNamespace>
+    <Description>Framework-free shared kernel: error catalogue, permission catalogue, context abstractions, paging.</Description>
+  </PropertyGroup>
+</Project>

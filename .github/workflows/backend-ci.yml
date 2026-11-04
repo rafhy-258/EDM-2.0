@@ -1,0 +1,64 @@
+name: backend-ci
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Restore, build, test (unit, architecture, integration)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+      # Integration tests start a PostgreSQL container with Testcontainers (Docker is preinstalled on ubuntu-latest).
+      # EDM_TEST_POSTGRES is deliberately not set here, so CI always uses a fresh container.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET SDK (version pinned by backend/global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Show SDK
+        run: dotnet --version
+
+      - name: Restore (locked to central package versions)
+        run: dotnet restore EDM.sln
+
+      - name: Build (warnings are errors)
+        run: dotnet build EDM.sln --no-restore -c Release
+
+      - name: Test
+        run: >-
+          dotnet test EDM.sln --no-build -c Release
+          --logger "trx;LogFileName=results.trx"
+          --results-directory TestResults
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/TestResults
+          if-no-files-found: ignore
+          retention-days: 14

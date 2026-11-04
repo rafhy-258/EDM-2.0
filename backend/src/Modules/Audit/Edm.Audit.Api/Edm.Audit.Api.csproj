@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Audit.Api</RootNamespace>
+    <Description>Audit HTTP API: the read-only viewer endpoints under /api/v1/audit-events.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Edm.Audit.Application\Edm.Audit.Application.csproj" />
+    <ProjectReference Include="..\Edm.Audit.Domain\Edm.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.Web\Edm.Web.csproj" />
+  </ItemGroup>
+</Project>

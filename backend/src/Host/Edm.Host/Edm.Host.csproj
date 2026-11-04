@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Edm.Host</RootNamespace>
+    <Description>Composition root: the ASP.NET Core host, pipeline, health checks, OpenAPI and logging.</Description>
+    <!-- Test projects reference the host's Program class. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Api\Edm.Audit.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Application\Edm.Audit.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Infrastructure\Edm.Audit.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Shared\Edm.Web\Edm.Web.csproj" />
+  </ItemGroup>
+</Project>

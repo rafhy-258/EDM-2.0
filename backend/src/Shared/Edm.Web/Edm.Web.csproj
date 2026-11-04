@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Web</RootNamespace>
+    <Description>ASP.NET Core adapters: permission authorization, deny-by-default authentication, ProblemDetails, correlation and actor context.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

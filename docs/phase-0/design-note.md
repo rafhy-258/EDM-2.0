@@ -12,80 +12,80 @@ Goal: a secure, observable, tested skeleton on which every later module is built
 
 | # | Scope item (Part 24.2) | Plan in this note | Status today |
 |---|---|---|---|
-| 1 | Solution layout, modular monolith, React app shell with navigation from 14.1 | Sections 3 and 6 | Frontend shell built here. Backend skeleton blocked (section 2). |
+| 1 | Solution layout, modular monolith, React app shell with navigation from 14.1 | Sections 3 and 6 | Web shell built and green. Backend solution, Host and Audit module built; first CI run pending (section 2). |
 | 2 | Component library decision as ADR, design system base | ADR-0003, section 5 | Decision recorded. Design-system primitives built in the web shell. |
-| 3 | Authentication: local accounts, SSO skeleton (OIDC, SAML), MFA hooks, lockout, session timeout | ADR-0006, section 7 | Design only. Backend blocked. |
-| 4 | Organisation and identity: users, departments, branches, hierarchy, Department Head mapping, roles, permissions, seeds from Part 20, CSV or API import | Section 7 | Design only. Backend blocked. |
-| 5 | Audit store with one write service, basic viewer | ADR-0005, section 8 | Design only. Backend blocked. |
-| 6 | API conventions: ProblemDetails, error catalogue, paging, ETag and If-Match, Idempotency-Key, OpenAPI with permission per endpoint | ADR-0007, section 9 | Design only. Backend blocked. |
-| 7 | Logging, correlation ids, health checks, CI (build, test, lint, dependency and licence scan), Docker Compose, seed data, README | Section 10 | CI workflow for the web shell can be written and run here. Backend CI blocked. |
+| 3 | Authentication: local accounts, SSO skeleton (OIDC, SAML), MFA hooks, lockout, session timeout | ADR-0006, section 7 | Deny-by-default authentication built; no sign-in provider yet (SSO pending Q25). Lockout and session timeout not started. |
+| 4 | Organisation and identity: users, departments, branches, hierarchy, Department Head mapping, roles, permissions, seeds from Part 20, CSV or API import | Section 7 | Not started. Permission catalogue (49 strings) and matrix are in place. |
+| 5 | Audit store with one write service, basic viewer | ADR-0005, section 8 | Built: append-only store, AuditWriter, viewer API. Viewer UI pending. |
+| 6 | API conventions: ProblemDetails, error catalogue, paging, ETag and If-Match, Idempotency-Key, OpenAPI with permission per endpoint | ADR-0007, section 9 | ProblemDetails, error catalogue, paging and permission declaration built. ETag and Idempotency-Key not started. |
+| 7 | Logging, correlation ids, health checks, CI (build, test, lint, dependency and licence scan), Docker Compose, seed data, README | Section 10 | Logging, correlation ids, health checks and backend-ci built. Docker Compose and seed data not started. |
 
 **Out of scope (Part 24.2):** any business module. No currencies, categories, EC, rules, requests or routing in Phase 0.
 
 ---
 
-## 2. Environment constraints and what can be verified now
+## 2. Environment constraints and how the backend is verified
 
-The build sandbox used for this session was checked during Phase 0 planning:
+The build sandbox cannot reach the .NET SDK download host or NuGet, so the backend cannot be compiled or tested inside it. The backend is verified in two other places:
 
-| Requirement | Reachable from this sandbox? | Impact |
+| Check | Where it runs | Status |
 |---|---|---|
-| npm registry (`registry.npmjs.org`) | Yes | The React shell can be installed, built, linted and tested here. |
-| GitHub | Yes | Repo and CI workflow files are managed here. |
-| PyPI | Yes | Not needed for Phase 0 backend. |
-| NuGet (`api.nuget.org`) | **No** | .NET packages cannot be restored. The backend cannot be compiled or tested here. |
-| .NET 10 SDK download (`dot.net`, `builds.dotnet.microsoft.com`) | **No** | The .NET SDK is not installed and cannot be installed here. |
-| Docker, PostgreSQL | Not installed | Integration tests (Testcontainers) cannot run here. |
+| Restore, build (warnings as errors), unit, architecture and integration tests | GitHub Actions, `backend-ci.yml` (ubuntu-latest, `actions/setup-dotnet` 10.x, Docker for Testcontainers) | Set up in Phase 0. First green run pending. |
+| Local checks on the product owner's Windows machine: .NET 10 SDK, PostgreSQL 18.6 | Owner's machine. Commands in `backend/README.md`. | Owner to run. The owner's `dotnet --version` output has varied (9.0.301 in one shell, 10.0.403 in another), so `backend/global.json` pins the SDK and the owner must confirm `dotnet --list-sdks` shows 10.0.x. |
+| Browser check of the web shell | Owner's browser via the live preview | Not yet done. The sandbox cannot download the Playwright browser. |
 
-**Consequence.** Backend C# code is not written in this turn. Writing unverified code would break Part 0 rule 3 and the standing rule "keep the repository always building and the tests green". The backend starts once one of these happens:
-
-1. Outbound access to `api.nuget.org` and the .NET SDK download host is allowed for this sandbox, **or**
-2. A machine or CI runner with the .NET 10 SDK, Docker and NuGet access is used for the backend build.
-
-**Decision requested from the product owner or platform team:** choose option 1 or 2 (see open-questions document, item E-1).
+Integration tests run against the server named by the `EDM_TEST_POSTGRES` environment variable when it is set (local PostgreSQL 18). Otherwise they start a `postgres:17-alpine` container with Testcontainers. Each test class uses its own freshly created database, which is dropped afterwards. Credentials are never written to the repository or to CI logs.
 
 ---
 
 ## 3. Solution layout
 
+What exists after Phase 0 (`backend/`), and what is planned:
+
 ```
 EDM-2.0/
 ├── README.md
-├── docs/
-│   ├── EDM2-Master-Prompt.md          # authoritative specification (single source of truth)
-│   ├── open-questions.md              # Part 18 batch and new questions
-│   ├── adr/                           # architecture decision records
-│   ├── phase-0/design-note.md         # this note
-│   ├── phase-1a/data-model-design-note.md
-│   └── permission-matrix.md           # Part 20 catalogue (Phase 0 deliverable)
-├── backend/                           # BLOCKED until SDK and NuGet access (section 2)
+├── docs/                              # specification, ADRs, design notes, open questions, permission matrix
+├── backend/
+│   ├── global.json                    # SDK 10.0.100, rollForward latestFeature
+│   ├── Directory.Build.props          # net10.0, nullable, implicit usings, warnings as errors
+│   ├── Directory.Packages.props       # central package versions
 │   ├── EDM.sln
 │   ├── src/
-│   │   ├── Host/                      # composition root: ASP.NET Core host, OpenAPI, Serilog, health, auth
-│   │   ├── BuildingBlocks/            # Result types, Money, ProblemDetails, paging, correlation, audit abstractions
+│   │   ├── Shared/
+│   │   │   ├── Edm.SharedKernel/      # framework-free: error catalogue (Part 21.3), permission catalogue (Part 20.1), paging, context abstractions
+│   │   │   └── Edm.Web/               # ASP.NET Core adapters: deny-by-default auth, permission policies, ProblemDetails, actor and correlation context
+│   │   ├── Host/
+│   │   │   └── Edm.Host/              # composition root: pipeline, Serilog, health checks, OpenAPI, optional startup migration
 │   │   └── Modules/
-│   │       ├── IdentityOrganisation/  # Domain, Application, Infrastructure, Api
-│   │       ├── Configuration/         # Phase 1A
-│   │       ├── ExpenseOpex/           # Phase 1C
-│   │       ├── ExpenseCapex/          # Phase 1D
-│   │       ├── ApprovalEngine/        # Phase 1B (routing library first)
-│   │       ├── Notifications/         # Phase 1C
-│   │       ├── Reporting/             # Phase 1E
-│   │       ├── Audit/                 # Phase 0
-│   │       └── Integrations/          # Phase 2 (empty shell only)
+│   │       └── Audit/                 # the first module, built to the full four-layer shape
+│   │           ├── Edm.Audit.Domain/          # AuditEvent (immutable), AuditDiff, AuditOutcome
+│   │           ├── Edm.Audit.Application/     # AuditWriter (the one write service), AuditViewer, ports
+│   │           ├── Edm.Audit.Infrastructure/  # EF Core mapping, SQL migration 0001, schema migrator
+│   │           └── Edm.Audit.Api/             # GET /api/v1/audit-events (permission audit.view)
 │   └── tests/
-│       ├── UnitTests/                 # xUnit
-│       ├── IntegrationTests/          # xUnit + Testcontainers (PostgreSQL)
-│       └── ArchitectureTests/         # NetArchTest: layer and module rules, endpoint permission test
-├── web/                               # React + strict TypeScript + Vite (BUILT in Phase 0)
+│       ├── Edm.UnitTests/             # xUnit: domain, application, shared kernel
+│       ├── Edm.ArchitectureTests/     # NetArchTest: layer and dependency rules
+│       └── Edm.IntegrationTests/      # xUnit + PostgreSQL: schema, append-only guarantees, API, endpoint permission test
+├── web/                               # React + strict TypeScript + Vite (Phase 0 shell)
 ├── deploy/
-│   ├── docker-compose.yml             # PostgreSQL, app (BLOCKED until Dockerfile can be tested)
-│   └── iis/                           # Phase 1E
+│   └── docker-compose.yml             # planned: PostgreSQL and app. Not yet written (see section 10).
 └── .github/workflows/
-    └── web-ci.yml                     # web build, test, lint, licence check
+    ├── web-ci.yml                     # web: typecheck, lint, test, build, licence scan, audit
+    └── backend-ci.yml                 # backend: restore, build, test
 ```
 
-Module empty shells follow the four-folder rule (Domain, Application, Infrastructure, Api) from ADR-0001. Shells are created only when the backend is buildable.
+Planned modules that are **not** created yet: Identity & Organisation, Configuration, Expense-OPEX, Expense-CAPEX, Approval Engine, Notifications, Reporting, Integrations. Each is created only when its design note is approved (Standing Preamble). Each will have the four folders from ADR-0001.
+
+### Deviations from the earlier plan
+
+| Earlier plan | What was built | Why |
+|---|---|---|
+| `src/BuildingBlocks/` | `src/Shared/Edm.SharedKernel` and `src/Shared/Edm.Web` | The kernel must stay framework-free, so the ASP.NET Core adapters sit in a separate project. The architecture test enforces this. |
+| Module folders `IdentityOrganisation/`, `ExpenseOpex/`, and so on | Folder names follow the module names in Part 3, for example `Audit/` with `Edm.Audit.*` projects | Consistent naming. Only Audit exists in Phase 0. |
+| `tests/UnitTests`, `IntegrationTests`, `ArchitectureTests` | `tests/Edm.UnitTests`, `Edm.IntegrationTests`, `Edm.ArchitectureTests` | Naming convention `Edm.*`. |
+| Audit schema through EF Core migrations | Versioned SQL, `Migrations/0001_audit_schema.sql`, applied by `AuditSchemaMigrator` | The append-only trigger and the grants must be exact. EF Core mapping still handles runtime reads and writes. An integration test checks that the mapping and the SQL agree. EF Core migrations are used from Phase 1A onwards. This is recorded in ADR-0005. |
+| Migrations run manually | `Database:MigrateOnStartup` controls a startup migration, default off | Production migrations are a deployment step. Development and tests turn it on. |
 
 ---
 
