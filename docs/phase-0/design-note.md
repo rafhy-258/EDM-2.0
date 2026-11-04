@@ -138,7 +138,7 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 
 **Data scope.** Scope values are own, department and all, applied on top of permissions in the query layer (Part 20 preamble).
 
-**Local sign-in (built 04-Nov-2026, not yet verified by CI or on the owner's machine).** The owner asked for database-backed sign-in with no Docker and no cloud. SSO stays blocked on Q25.
+**Local sign-in (built 04-Nov-2026; backend CI green on b5e6f57; not yet run on the owner's machine).** The owner asked for database-backed sign-in with no Docker and no cloud. SSO stays blocked on Q25.
 - Tables (migration `0002_identity_schema.sql`): `identity_users` (lower-case username, unique per tenant, PBKDF2 hash, failed sign-in count, lock time) and `identity_user_roles`. The rest of the Part 13 organisation model is not built yet.
 - Password hashing: PBKDF2-HMAC-SHA256, random 16-byte salt, 600,000 iterations, stored with each hash. Written with the .NET built-in primitive, so no package is added. ADR-0006 names ASP.NET Core Identity; this is a deviation, open as P0-4.
 - Lockout: 5 failed sign-ins lock the account for 15 minutes (P0-1). A locked or disabled account is never password-checked. Every refusal returns the same `EDM-AUTH-001` response, so the response does not reveal which accounts exist (P0-6).
@@ -192,8 +192,8 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 
 | Done criterion | Status |
 |---|---|
-| A user can sign in | **Built, not yet verified.** Database-backed local accounts with a session cookie (section 7). Integration tests cover sign-in, lockout, sign-out and the audit trail. Not yet run by CI or on the owner's machine. SSO is still blocked on Q25. |
-| The menu shows only what the role permits | **Built, web tests pass locally.** The menu is driven by the server session (`GET /api/v1/auth/session`). Development builds can switch to a role fixture for checking. |
+| A user can sign in | **Built, not yet verified.** Database-backed local accounts with a session cookie (section 7). Integration tests cover sign-in, lockout, sign-out and the audit trail. backend-ci is green on b5e6f57 (77 unit, 27 integration, 8 architecture tests). Not yet run on the owner's machine. SSO is still blocked on Q25. |
+| The menu shows only what the role permits | **Built; web-ci green on 8ec87fd.** The menu is driven by the server session (`GET /api/v1/auth/session`). Development builds can switch to a role fixture for checking. |
 | Creating or changing a user or department | **Partly met.** Sign-in events (`SignIn`, `SignInFailed`, `AccountLocked`, `SignOut`, `UserCreated`) are written and shown in the Activity Logs viewer. User and department changes are not built yet, so no such event exists to show. |
 | A test proves every endpoint declares a permission | **Met** for the endpoints that exist. The three sign-in endpoints are named anonymous exceptions (P0-5). Test: `Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_endpoint`. It must be kept as new endpoints arrive. |
 | CI is green | **Met** for `web-ci` and `backend-ci` on the current head of the branch. |
