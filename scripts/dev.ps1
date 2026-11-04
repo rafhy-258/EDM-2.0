@@ -179,9 +179,19 @@ if ($psql -and $password) {
         else {
             Write-Host "  Database $PgDatabase exists"
         }
-        # Count the sign-in accounts so a new database can get its first administrator. The table may not exist yet.
-        $countText = (& $psql -h $PgHost -p $PgPort -U $PgUser -d $PgDatabase -tAc "SELECT CASE WHEN to_regclass('identity_users') IS NULL THEN 0 ELSE (SELECT count(*) FROM identity_users) END")
-        if ($LASTEXITCODE -eq 0 -and "$countText".Trim() -match '^[0-9]+$') { $accountCount = [int]"$countText".Trim() }
+        # Count the sign-in accounts so a new database can get its first administrator. The API creates the table on
+        # its first start, so a missing table means there are no accounts yet. The table is checked first, because
+        # PostgreSQL rejects a query that names a table which does not exist.
+        $tableText = (& $psql -h $PgHost -p $PgPort -U $PgUser -d $PgDatabase -tAc "SELECT to_regclass('identity_users') IS NOT NULL")
+        if ($LASTEXITCODE -eq 0) {
+            if ("$tableText".Trim() -eq 'f') {
+                $accountCount = 0
+            }
+            elseif ("$tableText".Trim() -eq 't') {
+                $countText = (& $psql -h $PgHost -p $PgPort -U $PgUser -d $PgDatabase -tAc "SELECT count(*) FROM identity_users")
+                if ($LASTEXITCODE -eq 0 -and "$countText".Trim() -match '^[0-9]+$') { $accountCount = [int]"$countText".Trim() }
+            }
+        }
     }
     finally {
         Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
@@ -223,7 +233,7 @@ elseif ($accountCount -eq 0) {
     $bootstrapFromScript = $true
 }
 elseif ($accountCount -lt 0) {
-    Write-Host '  Could not check for sign-in accounts (psql not available).'
+    Write-Host '  Could not check for sign-in accounts. The database check above did not succeed.'
     Write-Host '  If none exist yet, set Identity__Bootstrap__Username and Identity__Bootstrap__Password first.'
 }
 else {
@@ -283,6 +293,11 @@ function Stop-Api {
 
 if (-not $ready) {
     Stop-Api
+    Write-Host ''
+    Write-Host '  Last lines of the API error log:' -ForegroundColor Yellow
+    if (Test-Path $apiErrLog) { Get-Content -Path $apiErrLog -Tail 40 | ForEach-Object { Write-Host "  $_" } }
+    Write-Host '  Last lines of the API log:' -ForegroundColor Yellow
+    if (Test-Path $apiLog) { Get-Content -Path $apiLog -Tail 20 | ForEach-Object { Write-Host "  $_" } }
     Stop-Script "The API did not become ready. See $apiLog and $apiErrLog."
 }
 Write-Host "  API ready at $apiUrl (health: $apiUrl/health/ready)"
