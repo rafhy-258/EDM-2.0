@@ -1,20 +1,29 @@
 namespace Edm.Identity.Domain;
 
 /// <summary>How many failed sign-ins lock an account, and for how long. Values come from configuration.</summary>
-public sealed record LockoutPolicy(int Threshold, TimeSpan Duration)
+public sealed class LockoutPolicy
 {
-    public LockoutPolicy
+    public LockoutPolicy(int threshold, TimeSpan duration)
     {
-        if (Threshold < 1)
+        if (threshold < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(Threshold), "The lockout threshold must be at least 1.");
+            throw new ArgumentOutOfRangeException(nameof(threshold), "The lockout threshold must be at least 1.");
         }
 
-        if (Duration <= TimeSpan.Zero)
+        if (duration <= TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(Duration), "The lockout duration must be positive.");
+            throw new ArgumentOutOfRangeException(nameof(duration), "The lockout duration must be positive.");
         }
+
+        Threshold = threshold;
+        Duration = duration;
     }
+
+    /// <summary>Failed sign-ins in a row that lock the account.</summary>
+    public int Threshold { get; }
+
+    /// <summary>How long the account stays locked.</summary>
+    public TimeSpan Duration { get; }
 }
 
 /// <summary>Password rules. The minimum length is configurable. The other rules are fixed.</summary>
