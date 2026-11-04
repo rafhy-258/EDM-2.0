@@ -258,7 +258,8 @@ $password = $null
 
 $apiUrl = "http://localhost:$ApiPort"
 $api = Start-Process -FilePath 'dotnet' `
-    -ArgumentList @('run', '--project', $apiProject, '--no-launch-profile', '--urls', $apiUrl) `
+    -ArgumentList "run --project `"$apiProject`" --no-launch-profile --urls $apiUrl" `
+    # One string, with the project path in quotes: Windows PowerShell 5.1 does not quote array items that contain spaces.
     -WorkingDirectory $backendDir `
     -RedirectStandardOutput $apiLog `
     -RedirectStandardError $apiErrLog `
