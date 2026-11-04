@@ -4,6 +4,7 @@ using Edm.SharedKernel.Errors;
 using Edm.Web.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using System.Text.Json.Nodes;
 
@@ -105,20 +106,43 @@ public static class AuditEndpoints
     /// <summary>Maps the audit viewer. Every endpoint declares its permission (Part 20).</summary>
     public static IEndpointRouteBuilder MapAuditEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/audit-events").WithTags("Audit");
+        var group = app.MapGroup("/api/v1").WithTags("Audit");
 
-        group.MapGet("", async (
+        group.MapGet("/audit-events", async (
                 AuditViewer viewer,
-                [AsParameters] AuditListRequest request,
+                [FromQuery] DateTimeOffset? from,
+                [FromQuery] DateTimeOffset? to,
+                [FromQuery] string? module,
+                [FromQuery] string? action,
+                [FromQuery] string? entityType,
+                [FromQuery] string? entityId,
+                [FromQuery] Guid? actorUserId,
+                [FromQuery] string? outcome,
+                [FromQuery] int? page,
+                [FromQuery] int? pageSize,
                 CancellationToken cancellationToken) =>
             {
+                var request = new AuditListRequest
+                {
+                    From = from,
+                    To = to,
+                    Module = module,
+                    Action = action,
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    ActorUserId = actorUserId,
+                    Outcome = outcome,
+                    Page = page ?? 1,
+                    PageSize = pageSize ?? 50,
+                };
+
                 var result = await viewer.ListAsync(request.ToQuery(), cancellationToken);
-                var page = new AuditEventPage(
+                var body = new AuditEventPage(
                     result.Items.Select(AuditEventDto.From).ToArray(),
                     result.Page,
                     result.PageSize,
                     result.TotalCount);
-                return Results.Ok(page);
+                return Results.Ok(body);
             })
             .RequiresPermission("audit.view")
             .WithName("ListAuditEvents")
