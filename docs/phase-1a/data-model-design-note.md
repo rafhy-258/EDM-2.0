@@ -419,7 +419,7 @@ A missing record returns 404 with no EDM code, because Part 21.3 has no not-foun
 - The client and validation tests are in one file, `configurationApi.test.ts`, not two.
 
 **Verification record (slice 1):**
-- Backend CI on 0455500: restore, build and tests passed. 103 unit, 12 architecture and 38 integration tests, none skipped. The build failed twice first (c3486ab: a missing `Microsoft.AspNetCore.Builder` using; fixed in 0455500).
+- Backend CI on 0455500: restore, build and tests passed. 103 unit, 12 architecture and 38 integration tests, none skipped. The first backend run (c3486ab) failed on a missing `Microsoft.AspNetCore.Builder` using. It was fixed in 0455500.
 - Web CI on c3486ab: typecheck, lint, 102 tests in 18 files, build and licence scan passed. Web checks were not re-run on 0455500, which changed only backend files.
 - The owner's local run (PowerShell 5.1 with `scripts/dev.ps1`) is still to be done. It is not verified here.
 
