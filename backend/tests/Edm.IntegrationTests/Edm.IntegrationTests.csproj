@@ -18,5 +18,6 @@
     <ProjectReference Include="..\..\src\Host\Edm.Host\Edm.Host.csproj" />
     <ProjectReference Include="..\..\src\Modules\Audit\Edm.Audit.Infrastructure\Edm.Audit.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Audit\Edm.Audit.Domain\Edm.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Configuration\Edm.Configuration.Infrastructure\Edm.Configuration.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

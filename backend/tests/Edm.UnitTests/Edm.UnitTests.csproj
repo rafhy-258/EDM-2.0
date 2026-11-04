@@ -18,5 +18,7 @@
     <ProjectReference Include="..\..\src\Modules\Identity\Edm.Identity.Domain\Edm.Identity.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Edm.Identity.Application\Edm.Identity.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Edm.Identity.Infrastructure\Edm.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Configuration\Edm.Configuration.Domain\Edm.Configuration.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Configuration\Edm.Configuration.Application\Edm.Configuration.Application.csproj" />
   </ItemGroup>
 </Project>
