@@ -43,6 +43,11 @@ public static class ProblemResponse
             body["errors"] = fieldErrors;
         }
 
-        return context.Response.WriteAsJsonAsync(body, context.RequestAborted);
+        // WriteAsJsonAsync would replace the content type with application/json, so the type is passed explicitly.
+        return context.Response.WriteAsJsonAsync(
+            body,
+            options: null,
+            contentType: ProblemJsonContentType,
+            cancellationToken: context.RequestAborted);
     }
 }

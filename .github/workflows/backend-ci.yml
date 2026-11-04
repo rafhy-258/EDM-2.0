@@ -61,15 +61,7 @@ jobs:
 
       - name: Summarise failures as annotations
         if: failure()
-        run: |
-          for log in ci-restore.log ci-build.log ci-test.log; do
-            [ -f "$log" ] || continue
-            grep -E ': error |error NU[0-9]+|error MSB[0-9]+|^\s*Failed |Failed Edm\.' "$log" \
-              | sed -E 's/\r//' | sort -u | head -n 10 \
-              | while IFS= read -r line; do
-                  echo "::error title=${log}::${line}"
-                done
-          done
+        run: python3 ../.github/scripts/summarise-ci-failures.py
 
       - name: Upload logs and test results
         if: always()
