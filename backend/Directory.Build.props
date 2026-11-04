@@ -5,9 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- NuGet vulnerability audit is reported, not fatal, so a new advisory cannot stop an unrelated build.
-         Vulnerable packages are reviewed in the backend security checklist (see backend/README.md). -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <!-- NuGet audit (vulnerable packages) fails the build at high or critical severity, matching the web npm audit gate.
+         Restore warnings are errors because of TreatWarningsAsErrors. -->
+    <NuGetAuditLevel>high</NuGetAuditLevel>
     <Deterministic>true</Deterministic>
     <Company>Warmbytes (Pvt) Ltd</Company>
     <Product>EDM 2.0</Product>

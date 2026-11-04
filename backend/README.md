@@ -64,6 +64,7 @@ A one-command start that also starts PostgreSQL (`deploy/docker-compose.yml`) is
 
 ## Rules that apply to every change
 
+- NuGet packages with a high or critical advisory fail the build (`NuGetAuditLevel` in `backend/Directory.Build.props`). Fix by upgrading, and pin the version centrally in `Directory.Packages.props`.
 - Every endpoint declares exactly one permission with `.RequiresPermission("...")`, or is an explicit anonymous health probe. A test fails the build otherwise.
 - Every state change writes one audit event through `IAuditWriter`.
 - Money is `numeric(18,2)` and rates are `numeric(18,4)`. Use `decimal`, never `float`.
