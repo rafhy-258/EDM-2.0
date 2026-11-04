@@ -59,6 +59,11 @@ jobs:
             --results-directory TestResults \
             --collect:"XPlat Code Coverage" 2>&1 | tee ci-test.log
 
+      - name: Test totals
+        if: always()
+        run: |
+          grep -hE "^(Passed|Failed)!|Total tests" ci-test.log 2>/dev/null | sed 's/^/::notice title=test totals::/' || true
+
       - name: Summarise failures as annotations
         if: failure()
         run: python3 ../.github/scripts/summarise-ci-failures.py
