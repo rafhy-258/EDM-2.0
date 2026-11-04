@@ -31,7 +31,7 @@ The build sandbox cannot reach the .NET SDK download host or NuGet, so the backe
 | Check | Where it runs | Status |
 |---|---|---|
 | Restore, build (warnings as errors), unit, architecture and integration tests | GitHub Actions, `backend-ci.yml` (ubuntu-latest, `actions/setup-dotnet` 10.x, Docker for Testcontainers) | Green on the current head of the branch: 17 integration, 36 unit and 5 architecture tests pass. |
-| Local checks on the product owner's Windows machine: .NET 10 SDK, PostgreSQL 18.6 | Owner's machine. Commands in `backend/README.md`. | Owner to run. The owner's `dotnet --version` output has varied (9.0.301 in one shell, 10.0.403 in another), so `backend/global.json` pins the SDK and the owner must confirm `dotnet --list-sdks` shows 10.0.x. |
+| Local checks on the product owner's Windows machine: .NET 10 SDK, PostgreSQL 18.6 | Owner's machine. Commands in `backend/README.md`. | Confirmed by the owner on 2026-11-04: PostgreSQL 18.6 (64-bit) on localhost:5432, database `postgres`, user `postgres`, authentication successful. .NET SDKs 9.0.301 and 10.0.403 are installed. Still to confirm: `dotnet --version` run inside `backend/` reports 10.0.x (`global.json` pins the SDK), and `dotnet test EDM.sln` passes with `EDM_TEST_POSTGRES` set. |
 | Browser check of the web shell | Owner's browser via the live preview | Not yet done. The sandbox cannot download the Playwright browser. |
 
 Integration tests run against the server named by the `EDM_TEST_POSTGRES` environment variable when it is set (local PostgreSQL 18). Otherwise they start a `postgres:17-alpine` container with Testcontainers. Each test class uses its own freshly created database, which is dropped afterwards. Credentials are never written to the repository or to CI logs.
