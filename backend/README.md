@@ -13,6 +13,7 @@ Specification: [docs/EDM2-Master-Prompt.md](../docs/EDM2-Master-Prompt.md). Phas
 | Host: pipeline, Serilog, health checks, OpenAPI (development), optional startup migration | `src/Host/Edm.Host` |
 | Audit module: append-only store, `AuditWriter`, viewer API | `src/Modules/Audit/*` |
 | Identity module: local accounts (PBKDF2 hashing, lockout), sign-in, sign-out, session, first-administrator bootstrap | `src/Modules/Identity/*` |
+| Configuration module: categories and subcategories (Phase 1A, slice 1), soft delete, audit | `src/Modules/Configuration/*` |
 | Endpoints | `GET /api/v1/audit-events` (permission `audit.view`), `POST /api/v1/auth/sign-in`, `POST /api/v1/auth/sign-out`, `GET /api/v1/auth/session` (anonymous, see design note section 7), `GET /health/live`, `GET /health/ready` (anonymous) |
 
 ### Local sign-in (ADR-0006)
@@ -25,7 +26,7 @@ Accounts live in PostgreSQL. Settings are in the `Identity` section of `appsetti
 | `Identity:MinimumPasswordLength` | 12 | Open as P0-3. |
 | `Identity:LockoutThreshold`, `Identity:LockoutMinutes` | 5, 15 | Open as P0-1. |
 | `Identity:IdleTimeoutMinutes` | 20 | Open as P0-2. |
-| `Identity:Bootstrap:Username`, `Password`, `Roles` | none | Creates the first administrator when the database has no accounts and `Database:MigrateOnStartup` is true. Roles default to `SYSTEM_ADMINISTRATOR,AUDITOR` (P0-7). |
+| `Identity:Bootstrap:Username`, `Password`, `Roles` | none | Creates the first administrator when the database has no accounts and `Database:MigrateOnStartup` is true. Roles default to `SYSTEM_ADMINISTRATOR,AUDITOR` (P0-7). That role set cannot manage categories (`config.*` belongs to EDM Administrator). The bootstrap roles are only used when the account is created, so an existing account needs the role added in its database row. |
 
 Do not put the bootstrap password in `appsettings.json`. Set it in the environment, or let `scripts/dev.ps1` prompt for it.
 

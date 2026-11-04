@@ -73,7 +73,7 @@ Department Head is not a stored role. Its extra rights come from the hierarchy (
 | Auditor | `opex.request.view.all`, `capex.request.view.all`, `report.view.all`, `report.export`, `audit.view`, `audit.export`, `audit.security.view`, `config.policy.view` |
 | Finance Viewer | `opex.request.view.all`, `capex.request.view.all`, `report.view.all`, `report.export` |
 | System Administrator | `org.user.manage`, `org.sync.run`, all `iam.*`, `settings.manage`, `notification.template.manage`, `retention.manage`, `health.view`, `integration.manage`. No approval, no config approval, no audit alteration. |
-| System Administrator, **proposed additions** | `org.department.manage`, `org.branch.manage`, `org.hierarchy.manage`, `org.user.view`. **Not in Part 20.2.** Added because no role otherwise holds them, which would make the Departments, Branches, Hierarchy and Users screens unreachable. Marked PROPOSED in `web/src/session/roles.ts` until open question 1A-8 is answered. |
+| System Administrator, **additions approved 04-Nov-2026 (1A-8)** | `org.department.manage`, `org.branch.manage`, `org.hierarchy.manage`, `org.user.view`. **Not in Part 20.2.** Added because no role otherwise holds them, which would make the Departments, Branches, Hierarchy and Users screens unreachable. Marked PROPOSED in `web/src/session/roles.ts` until open question 1A-8 is answered. |
 
 \* CAPEX create also needs CAPEX eligibility (Part 7.1, seeded to Admin, Information Technology and Digital).
 

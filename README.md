@@ -15,8 +15,8 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 | Phase 1A data-model design note | Drafted, awaiting approval (`docs/phase-1a/data-model-design-note.md`) |
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |
 | Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, Activity Logs viewer (`/audit/activity`), tests |
-| Backend (`backend/`) | Built: shared kernel, session-cookie authentication, Audit module (store, writer, viewer API), Identity module (local database accounts, sign-in with lockout, first-administrator bootstrap), Host. Sign-in is built and backend CI is green (b5e6f57, 112 tests). It has not yet been run on the owner's machine. SSO waits for Q25. |
-| Database migrations | Audit schema only (Phase 0). Business migrations not started (Phase 1A, after approval) |
+| Backend (`backend/`) | Built: shared kernel, session-cookie authentication, Audit module (store, writer, viewer API), Identity module (local database accounts, sign-in with lockout, first-administrator bootstrap), Configuration module (categories and subcategories, Phase 1A slice 1), Host. Sign-in is built and backend CI was green on b5e6f57 (112 tests). The categories slice is not yet verified by CI. SSO waits for Q25. |
+| Database migrations | Audit, identity and categories schemas. Currency, EC, RA, limits, delegation and policy migrations follow in Phase 1A |
 | One-command local start | `scripts/dev.ps1` for Windows PowerShell, with PostgreSQL already running. Not yet run by the agent (no .NET or PowerShell in the sandbox) |
 
 No business module (currency, categories, routing, requests) is built yet. Phase 0 is in progress; see the done-criteria table in the design note, section 11.

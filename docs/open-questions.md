@@ -41,6 +41,8 @@ Reply with the item number and your answer, for example: `1: level numbers carry
 | 1A-8 | **Organisation and Users permissions.** Part 20.2 gives no role `org.department.manage`, `org.branch.manage`, `org.hierarchy.manage` or `org.user.view`, although Departments, Branches, Hierarchy and Users are P1 screens. Who maintains organisation data? | System Administrator holds the four permissions (PROPOSED, marked in `web/src/session/roles.ts` and `docs/permission-matrix.md`). EDM Administrator does not see these screens, as Part 20.2 says. |
 | 1A-9 | **Organisation view for approvers.** A Department Head needs to see their department's users and hierarchy to resolve approvers. Which permission grants this read-only? | Department Head uses hierarchy-derived read access. No new permission is added until confirmed. |
 
+**Status 04-Nov-2026: 1A-1 to 1A-9 approved by the product owner with the defaults shown above.** Items 1 to 7 of section A are not yet confirmed and keep their defaults until answered.
+
 ## B. Needed before the routing engine (Phase 1B)
 
 | # | Question | Default used until answered |

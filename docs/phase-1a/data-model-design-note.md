@@ -2,7 +2,7 @@
 
 **Scope:** Currency and rates; categories and subcategories; EC member pool and EC levels (per nature); recommending authorities; department-head limit (per nature); delegation matrix; policy versioning; maker-checker.
 **Specification:** Master Prompt Parts 4.1, 4.2, 4.8, 5, 13, 21, 22, 23.
-**Status:** Draft. Migrations are written only after this note is approved (Part 0 rule 6).
+**Status:** Approved by the product owner on 04-Nov-2026, with the defaults for open questions 1A-1 to 1A-9 (`docs/open-questions.md`, section A). Items 1 to 7 of section A are not yet confirmed and keep their defaults. Migrations follow the order in section 10. Build progress is in section 13.
 **Blocked by:** the Part 18 questions in [open-questions.md](../open-questions.md), items 1 to 7 and the Phase 1A items listed in section 12.
 
 ---
@@ -358,3 +358,57 @@ Full wording and defaults are in [open-questions.md](../open-questions.md).
 - **Blocks the Others option:** how Others is routed (item 13).
 
 Work that is not blocked (the currency module, categories and subcategories, the coverage analyzer and the maker-checker framework) can start after this note is approved, as the Standing Preamble requires.
+
+---
+
+## 13. Build progress and acceptance checklists
+
+### Slice 1: categories and subcategories (M1A-02, part)
+
+Built in this slice: the `Configuration` module (Domain, Application, Infrastructure, Api), migration `0003_configuration_categories.sql`, the endpoints in section 13.1, and the Categories and Subcategories screens.
+
+**Decisions applied in this slice** (from section 2.3, 2.4 and the Master Prompt 5.1):
+- Soft delete only. A category with subcategories, or used by a rule or request, cannot be deleted (EDM-CFG-003). Deactivate instead.
+- Names are unique among active, non-deleted rows of the same tenant (categories) or of the same category (subcategories). Comparison ignores case. The message is a field error (EDM-VAL-001).
+- Every update carries the row version read earlier. A stale version returns EDM-CONC-001 (412).
+- Every create, update and delete writes an audit event with the old and new values (module `Configuration`).
+- The usage checker (section 8) is a stub that reports no usages until Phase 1C. Deactivation warnings listing rules therefore show nothing yet.
+- A new subcategory needs an active category (the server refuses a missing or inactive one with a field error on `categoryId`).
+- `is_others` is in the table but not exposed. The Others routing is open point 13 in section 12.
+- Categories are not under maker-checker. Part 5.0 lists only the matrix, EC levels, limits and currency rates.
+- Build order. Part 24.3 lists currency first. The product owner asked for the configuration screens in the order categories, subcategories, financial limits, approval authorities and policies. This slice follows the owner's order. Currency and rates (M1A-01) are next, unless the owner asks for them first.
+- Policy versions (Part 4.8) are not created yet. They depend on `policy_versions` in M1A-06. This is a known gap, not a choice.
+
+**13.1 Endpoints**
+
+| Method and route | Permission | Notes |
+|---|---|---|
+| GET `/api/v1/categories?includeInactive=` | `config.category.view` | Returns categories with `subcategoryCount` and `rowVersion`. |
+| POST `/api/v1/categories` | `config.category.manage` | Returns 201. |
+| PUT `/api/v1/categories/{id}` | `config.category.manage` | Body has `rowVersion`. Can deactivate with `isActive: false`. |
+| DELETE `/api/v1/categories/{id}?rowVersion=` | `config.category.manage` | Soft delete. Blocked when subcategories or usages exist. |
+| GET `/api/v1/subcategories?categoryId=&includeInactive=` | `config.subcategory.manage` | No view-only subcategory permission exists in the catalogue, so reads use the manage permission. |
+| POST `/api/v1/subcategories` | `config.subcategory.manage` | |
+| PUT `/api/v1/subcategories/{id}` | `config.subcategory.manage` | As for categories. |
+| DELETE `/api/v1/subcategories/{id}?rowVersion=` | `config.subcategory.manage` | As for categories. |
+
+A missing record returns 404 with no EDM code, because Part 21.3 has no not-found code and no code may be added without a Change Request.
+
+**13.2 Acceptance checklist (slice 1)**
+
+| # | Check | Test |
+|---|---|---|
+| 1 | Category name is required, trimmed, at most 200 characters; description at most 500 | `CatalogueRulesTests` |
+| 2 | Duplicate active category name (ignoring case) is refused with a field error on `name` | `CategoryServiceTests.Duplicate_name_is_a_field_error` |
+| 3 | Subcategory name is unique within its category only | `SubcategoryServiceTests.Same_name_is_allowed_in_another_category` |
+| 4 | A category with active or inactive subcategories cannot be deleted | `CategoryServiceTests.Category_with_subcategories_cannot_be_deleted` |
+| 5 | Usage checker is called before delete | `CategoryServiceTests.UsageChecker_is_called_before_delete` |
+| 6 | Stale row version returns EDM-CONC-001 | `ConfigurationApiTests.Stale_update_is_refused_with_412` |
+| 7 | Every create, update and delete writes one audit event with old and new values | `CategoryServiceTests.Each_change_writes_an_audit_event` |
+| 8 | A user without `config.category.view` gets 403 on the list | `ConfigurationApiTests.Requester_cannot_list_categories` |
+| 9 | Deactivated names can be reused | `ConfigurationApiTests.Deactivated_name_can_be_reused` |
+| 10 | Screens: list, create, edit, deactivate, delete with confirmation, field and server errors shown | `CategoriesPage.test.tsx`, `SubcategoriesPage.test.tsx` |
+| 11 | Every endpoint declares one permission | `AuditApiTests.Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_endpoint` (existing; covers the new routes) |
+| 12 | Configuration layer rules: domain and application do not reach infrastructure or the web | `ConfigurationLayerRules` (architecture tests) |
+
+**Still to build in Phase 1A (not started):** currencies and rates (M1A-01), EC members and recommending authorities (M1A-03), OPEX and CAPEX configuration including financial limits and the delegation matrix (M1A-04, M1A-05), and policy versions with maker-checker (M1A-06). Each gets its own checklist when it is built.
