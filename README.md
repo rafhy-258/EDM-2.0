@@ -10,25 +10,26 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 |---|---|
 | Specification saved in repository | Done (`docs/EDM2-Master-Prompt.md`) |
 | Phase 0 design note | Drafted, awaiting product-owner review (`docs/phase-0/design-note.md`) |
-| Architecture decision records | 11 records, see `docs/adr/` |
+| Architecture decision records | 11 records, see `docs/adr/` (0010 is Proposed) |
 | Permission matrix (Part 20) | Drafted (`docs/permission-matrix.md`) |
 | Phase 1A data-model design note | Drafted, awaiting approval (`docs/phase-1a/data-model-design-note.md`) |
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |
 | Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, tests |
-| Backend (`backend/`) | **Not started.** The build sandbox cannot reach NuGet or the .NET 10 SDK. See the design note, section 2. |
+| Backend (`backend/`) | Built: shared kernel, deny-by-default auth, Audit module (store, writer, viewer API), Host. CI green (17 integration, 36 unit, 5 architecture tests). Sign-in not yet built. |
 | Database migrations | Not started (Phase 1A, after approval) |
 
-No business module (currency, categories, routing, requests) is built yet. Phase 0 is in progress.
+No business module (currency, categories, routing, requests) is built yet. Phase 0 is in progress; see the done-criteria table in the design note, section 11.
 
 ## Repository layout
 
 ```
 docs/         specification, ADRs, design notes, open questions, permission matrix
 web/          React + strict TypeScript + Vite shell (Fluent UI React v9, Tailwind for layout)
-.github/      CI workflows (web-ci: typecheck, lint, tests, build, licence scan, audit)
+backend/      .NET 10 solution: shared kernel, web adapters, host, Audit module, three test projects
+.github/      CI workflows (web-ci, backend-ci)
 ```
 
-The backend solution layout is fixed in `docs/phase-0/design-note.md`, section 3.
+The backend solution layout is in `docs/phase-0/design-note.md`, section 3. Backend setup and local checks are in `backend/README.md`.
 
 ## Run the web shell
 

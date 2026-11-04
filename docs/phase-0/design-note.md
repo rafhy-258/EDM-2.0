@@ -12,7 +12,7 @@ Goal: a secure, observable, tested skeleton on which every later module is built
 
 | # | Scope item (Part 24.2) | Plan in this note | Status today |
 |---|---|---|---|
-| 1 | Solution layout, modular monolith, React app shell with navigation from 14.1 | Sections 3 and 6 | Web shell built and green. Backend solution, Host and Audit module built; first CI run pending (section 2). |
+| 1 | Solution layout, modular monolith, React app shell with navigation from 14.1 | Sections 3 and 6 | Web shell and backend (solution, Host, Audit module) built. Both CI workflows green (section 2). |
 | 2 | Component library decision as ADR, design system base | ADR-0003, section 5 | Decision recorded. Design-system primitives built in the web shell. |
 | 3 | Authentication: local accounts, SSO skeleton (OIDC, SAML), MFA hooks, lockout, session timeout | ADR-0006, section 7 | Deny-by-default authentication built; no sign-in provider yet (SSO pending Q25). Lockout and session timeout not started. |
 | 4 | Organisation and identity: users, departments, branches, hierarchy, Department Head mapping, roles, permissions, seeds from Part 20, CSV or API import | Section 7 | Not started. Permission catalogue (49 strings) and matrix are in place. |
@@ -30,7 +30,7 @@ The build sandbox cannot reach the .NET SDK download host or NuGet, so the backe
 
 | Check | Where it runs | Status |
 |---|---|---|
-| Restore, build (warnings as errors), unit, architecture and integration tests | GitHub Actions, `backend-ci.yml` (ubuntu-latest, `actions/setup-dotnet` 10.x, Docker for Testcontainers) | Set up in Phase 0. First green run pending. |
+| Restore, build (warnings as errors), unit, architecture and integration tests | GitHub Actions, `backend-ci.yml` (ubuntu-latest, `actions/setup-dotnet` 10.x, Docker for Testcontainers) | Green on the current head of the branch: 17 integration, 36 unit and 5 architecture tests pass. |
 | Local checks on the product owner's Windows machine: .NET 10 SDK, PostgreSQL 18.6 | Owner's machine. Commands in `backend/README.md`. | Owner to run. The owner's `dotnet --version` output has varied (9.0.301 in one shell, 10.0.403 in another), so `backend/global.json` pins the SDK and the owner must confirm `dotnet --list-sdks` shows 10.0.x. |
 | Browser check of the web shell | Owner's browser via the live preview | Not yet done. The sandbox cannot download the Playwright browser. |
 
@@ -179,12 +179,12 @@ Permissions for the menu come from the server session in a later step. Phase 0 u
 
 | Done criterion | Status |
 |---|---|
-| A user can sign in | Blocked (backend). The web shell has a sign-in placeholder. |
-| The menu shows only what the role permits | Built and tested in the web shell (cosmetic filter, fixture permissions). Server-side session is blocked. |
-| Creating or changing a user or department writes a correct audit event visible in the viewer | Blocked (backend). |
-| A test proves every endpoint declares a permission | Blocked (backend). Design fixed in section 9. |
-| CI is green | Web CI built here. Backend CI blocked. |
-| One command starts everything locally | Blocked (needs Docker and backend). Web-only dev server works now. |
+| A user can sign in | **Not met.** No sign-in provider yet (SSO choice pending Q25). Deny-by-default is built, so nobody can sign in until a provider is added. The web shell has a sign-in placeholder. |
+| The menu shows only what the role permits | **Partly met.** Built and tested in the web shell with fixture permissions. Not yet driven by the server session, which needs sign-in. |
+| Creating or changing a user or department writes a correct audit event visible in the viewer | **Partly met.** The audit store, writer and viewer API are built and tested. The viewer screen is not built, and user and department changes are not built (identity module not started). |
+| A test proves every endpoint declares a permission | **Met** for the endpoints that exist (`Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_health_probe`). It must be kept as new endpoints arrive. |
+| CI is green | **Met** for `web-ci` and `backend-ci` on the current head of the branch. |
+| One command starts everything locally | **Not met.** The web dev server starts with `npm run dev`. The API starts with `dotnet run`, but PostgreSQL setup is manual. `deploy/docker-compose.yml` is not written, and Docker has not been verified. |
 
 ---
 
