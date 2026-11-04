@@ -9,8 +9,8 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 | Area | Status |
 |---|---|
 | Specification saved in repository | Done (`docs/EDM2-Master-Prompt.md`) |
-| Phase 0 design note | Drafted, awaiting product-owner review (`docs/phase-0/design-note.md`) |
-| Architecture decision records | 11 records, see `docs/adr/` (0010 is Proposed) |
+| Phase 0 design note | Approved by the product owner, 04-Nov-2026 (`docs/phase-0/design-note.md`). SSO provider (Q25) still open |
+| Architecture decision records | 11 records, see `docs/adr/`. ADR-0003 and ADR-0010 accepted 04-Nov-2026 |
 | Permission matrix (Part 20) | Drafted (`docs/permission-matrix.md`) |
 | Phase 1A data-model design note | Drafted, awaiting approval (`docs/phase-1a/data-model-design-note.md`) |
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |

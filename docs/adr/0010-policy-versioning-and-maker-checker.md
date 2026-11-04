@@ -1,6 +1,6 @@
 # ADR-0010: Policy versioning and maker-checker: apply on approval
 
-**Status:** Proposed (for Phase 1A review)
+**Status:** Accepted. Approved by the product owner on 04-Nov-2026 (open question F-2).
 **Date:** 2026-11-04
 
 ## Context

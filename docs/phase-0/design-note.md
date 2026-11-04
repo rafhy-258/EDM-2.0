@@ -2,7 +2,7 @@
 
 **Product:** EDM 2.0 (Expense Delegation Matrix), Warmbytes (Pvt) Ltd
 **Specification:** [docs/EDM2-Master-Prompt.md](../EDM2-Master-Prompt.md), Parts 0 to 3, 10, 11, 13, 19 to 21 (read-first list for Phase 0)
-**Status:** Draft for product-owner review. Nothing in this note is approved until the owner replies "approved", per Standing Preamble 24.1.
+**Status:** Approved by the product owner on 04-Nov-2026 ("Approve as written"), per Standing Preamble 24.1. Q25 (SSO provider) is still open: the owner did not name a provider, so sign-in stays blocked.
 
 ---
 
@@ -211,6 +211,6 @@ The full question batch is in [docs/open-questions.md](../open-questions.md). Ph
 
 ## 14. Recommended next step
 
-1. The product owner reviews this note, ADR-0003 and ADR-0010, and answers the batch in `docs/open-questions.md`.
-2. Platform decides the backend build environment (E-1).
-3. After approval, the backend skeleton is built in the order of section 3.
+1. The product owner names the SSO provider for Q25. Sign-in is built after that. Until then it is blocked.
+2. The product owner confirms the database password was changed and the PowerShell history line was removed. It must not be pasted into chat.
+3. Phase 1A starts only after its own design note is approved and the 1A questions are answered (docs/phase-1a/data-model-design-note.md).

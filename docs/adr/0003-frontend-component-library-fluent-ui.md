@@ -1,6 +1,6 @@
 # ADR-0003: Frontend component library: Fluent UI React v9
 
-**Status:** Accepted, pending Phase 0 design review
+**Status:** Accepted. Approved by the product owner on 04-Nov-2026 (open question F-1).
 **Date:** 2026-11-04
 
 ## Context

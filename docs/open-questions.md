@@ -97,10 +97,10 @@ Reply with the item number and your answer, for example: `1: level numbers carry
 
 | # | Question | Default used until answered |
 |---|---|---|
-| 25 | **First deployment.** Target bank, hosting model and SSO provider (Entra ID, ADFS, Okta, other, and whether AD/LDAP bind is needed). | OIDC and SAML both supported. Provider chosen at deployment. |
+| 25 | **First deployment.** Target bank, hosting model and SSO provider (Entra ID, ADFS, Okta, other, and whether AD/LDAP bind is needed). | OIDC and SAML both supported. Provider chosen at deployment. | **Status 04-Nov-2026: open.** The owner marked "Other, or not yet decided" and named no provider. Sign-in stays blocked until one is named.
 | 24 | **Retention periods** for requests, attachments and audit data. | 10 years proposed for requests and audit, to be confirmed with the bank's policy. |
-| F-1 | **Component library.** Approve ADR-0003 (Fluent UI React v9) or choose shadcn/ui. | Fluent UI React v9. |
-| F-2 | **Policy-version and maker-checker design.** Approve ADR-0010 (stage and apply on approval). | Proposed. Phase 1A is blocked on this. |
+| F-1 | **Component library.** Approve ADR-0003 (Fluent UI React v9) or choose shadcn/ui. | Fluent UI React v9. **Approved by the product owner, 04-Nov-2026.** |
+| F-2 | **Policy-version and maker-checker design.** Approve ADR-0010 (stage and apply on approval). | Proposed. **Approved by the product owner, 04-Nov-2026.** |
 | F-3 | **Digit grouping default.** International (1,000,000) or lakh and crore (10,00,000) for the default display? | International. User-selectable as specified. |
 | F-4 | **SAML library.** Shortlist and licence approval for the SAML library (ADR-0006). | Evaluated during Phase 0. No commercial-only licence without approval. |
 
