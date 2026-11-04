@@ -1,0 +1,28 @@
+# Dependencies and build output
+node_modules/
+web/dist/
+web/coverage/
+web/.vite/
+*.tsbuildinfo
+
+# Logs and local environment
+*.log
+.env
+.env.local
+.env.*.local
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# .NET (for the backend, when it is added)
+backend/**/bin/
+backend/**/obj/
+backend/**/TestResults/
+*.user
+*.suo
+
+# Large or generated artefacts must not be committed (see README)
+artifacts/
