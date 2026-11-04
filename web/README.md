@@ -19,6 +19,7 @@ Phase 0 shell. Built with React 19, strict TypeScript, Vite 8, Fluent UI React v
 ```
 src/
   app/          root component, routing and route guards
+  audit/        Activity Logs viewer (Part 10.4): API client, Karachi date helpers, table, detail dialog
   components/   shell, status badges, state views (loading, empty, error, no permission), data table, dialogs
   design/       layout and spacing tokens (colour comes from Fluent themes)
   navigation/   Part 14.1 navigation data, and the pure permission filter

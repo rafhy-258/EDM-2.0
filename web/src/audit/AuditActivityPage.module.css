@@ -1,0 +1,38 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.formError {
+  grid-column: 1 / -1;
+  color: var(--colorPaletteRedForeground1);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary {
+  color: var(--colorNeutralForeground2);
+}
+
+.pager {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

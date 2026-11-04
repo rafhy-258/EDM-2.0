@@ -1,6 +1,8 @@
 import { FluentProvider, webLightTheme } from '@fluentui/react-components';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useMemo, useState, type ReactElement } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuditActivityPage } from '../audit/AuditActivityPage';
 import { AppShell, type DevRoleControl } from '../components/AppShell';
 import { NoPermissionState, SignInRequiredState } from '../components/StateViews';
 import { NAVIGATION, type NavItemDef } from '../navigation/navigation';
@@ -24,14 +26,20 @@ export function App() {
     ? { role: devRole, onChange: setDevRole }
     : undefined;
 
+  const [queryClient] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } } }),
+  );
+
   return (
-    <FluentProvider theme={webLightTheme} style={{ minHeight: '100vh' }}>
-      <SessionProvider user={user}>
-        <BrowserRouter>
-          <AppRoutes devControl={devControl} />
-        </BrowserRouter>
-      </SessionProvider>
-    </FluentProvider>
+    <QueryClientProvider client={queryClient}>
+      <FluentProvider theme={webLightTheme} style={{ minHeight: '100vh' }}>
+        <SessionProvider user={user}>
+          <BrowserRouter>
+            <AppRoutes devControl={devControl} />
+          </BrowserRouter>
+        </SessionProvider>
+      </FluentProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -59,6 +67,9 @@ function GuardedPage({ item }: { readonly item: NavItemDef }) {
   const { hasPermission } = useSession();
   if (!hasPermission(item.requiredPermission)) {
     return <NoPermissionState />;
+  }
+  if (item.id === 'activity-logs') {
+    return <AuditActivityPage />;
   }
   return <PlaceholderPage item={item} />;
 }
