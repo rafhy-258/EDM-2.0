@@ -399,16 +399,35 @@ A missing record returns 404 with no EDM code, because Part 21.3 has no not-foun
 | # | Check | Test |
 |---|---|---|
 | 1 | Category name is required, trimmed, at most 200 characters; description at most 500 | `CatalogueRulesTests` |
-| 2 | Duplicate active category name (ignoring case) is refused with a field error on `name` | `CategoryServiceTests.Duplicate_name_is_a_field_error` |
-| 3 | Subcategory name is unique within its category only | `SubcategoryServiceTests.Same_name_is_allowed_in_another_category` |
-| 4 | A category with active or inactive subcategories cannot be deleted | `CategoryServiceTests.Category_with_subcategories_cannot_be_deleted` |
-| 5 | Usage checker is called before delete | `CategoryServiceTests.UsageChecker_is_called_before_delete` |
+| 2 | Duplicate active category name (ignoring case) is refused with a field error on `name` | `CategoryServiceTests.Duplicate_name_is_a_field_error_and_ignores_case_and_spaces`; `ConfigurationApiTests.Duplicate_name_returns_a_field_error_on_name` |
+| 3 | Subcategory name is unique within its category only | `SubcategoryServiceTests.The_same_name_is_allowed_under_another_category`; `The_same_name_under_the_same_category_is_a_field_error` (`SubcategoryServiceTests`) |
+| 4 | A category with active or inactive subcategories cannot be deleted | `CategoryServiceTests.A_category_with_subcategories_cannot_be_deleted_even_when_they_are_inactive`; `ConfigurationApiTests.A_category_with_subcategories_cannot_be_deleted` |
+| 5 | Usage checker is called before delete | `CategoryServiceTests.The_usage_checker_is_asked_before_a_delete_and_a_usage_blocks_it`; `SubcategoryServiceTests.Deleting_a_used_subcategory_is_refused_and_the_usage_is_checked` |
 | 6 | Stale row version returns EDM-CONC-001 | `ConfigurationApiTests.Stale_update_is_refused_with_412` |
-| 7 | Every create, update and delete writes one audit event with old and new values | `CategoryServiceTests.Each_change_writes_an_audit_event` |
+| 7 | Every create, update and delete writes one audit event with old and new values | `CategoryServiceTests.Each_change_writes_one_audit_event_with_old_and_new_values`; `SubcategoryServiceTests.Each_subcategory_change_is_audited_with_the_subcategory_entity_type`; `ConfigurationApiTests.Every_change_appears_in_the_audit_viewer_with_its_values` |
 | 8 | A user without `config.category.view` gets 403 on the list | `ConfigurationApiTests.Requester_cannot_list_categories` |
 | 9 | Deactivated names can be reused | `ConfigurationApiTests.Deactivated_name_can_be_reused` |
-| 10 | Screens: list, create, edit, deactivate, delete with confirmation, field and server errors shown | `CategoriesPage.test.tsx`, `SubcategoriesPage.test.tsx` |
+| 10 | Screens: list, create, edit, deactivate, delete with confirmation, field and server errors shown | `CategoriesPage.test.tsx` (7 tests), `SubcategoriesPage.test.tsx` (3 tests), `configurationApi.test.ts` |
 | 11 | Every endpoint declares one permission | `AuditApiTests.Every_endpoint_declares_a_known_permission_or_is_an_explicit_anonymous_endpoint` (existing; covers the new routes) |
 | 12 | Configuration layer rules: domain and application do not reach infrastructure or the web | `ConfigurationLayerRules` (architecture tests) |
+
+**Web screens built (slice 1), and deviations from the plan:**
+- Categories: a table with status, subcategory count and the last change (dd-MMM-yyyy, Asia/Karachi), a switch to show inactive rows, and dialogs for create and edit. Edit has an Active switch, which is the deactivate and reactivate action. Delete asks for confirmation through a destructive dialog. Field errors from the server appear on the field. A stale row version or a refused delete appears as an alert.
+- Subcategories: a table with a category filter (applied on the server), and the same dialogs. The category is required. The New button is disabled until an active category exists, and a message says so. This is a deviation from the plan, where the server refusal alone was expected. The server still refuses the same case.
+- The change buttons and the New button show only with `config.category.manage` or `config.subcategory.manage`. A user with view-only permission sees the table and no change actions.
+- Deactivation shows no usage warning, because the usage checker is a stub until rules exist (1B and 1C).
+- The client and validation tests are in one file, `configurationApi.test.ts`, not two.
+
+**Verification record (slice 1):**
+- Backend CI on 0455500: restore, build and tests passed. 103 unit, 12 architecture and 38 integration tests, none skipped. The build failed twice first (c3486ab: a missing `Microsoft.AspNetCore.Builder` using; fixed in 0455500).
+- Web CI on c3486ab: typecheck, lint, 102 tests in 18 files, build and licence scan passed. Web checks were not re-run on 0455500, which changed only backend files.
+- The owner's local run (PowerShell 5.1 with `scripts/dev.ps1`) is still to be done. It is not verified here.
+
+**Known gaps (slice 1), each tracked:**
+- Policy versions (Part 4.8) are not created for category changes. They wait for `policy_versions` in M1A-06.
+- The deactivation warning that lists active rules waits for rules (1B and 1C).
+- The Others option is blocked by open point 13.
+- The bootstrap default roles do not include EDM_ADMINISTRATOR (P0-7, not confirmed). An existing account needs the role added in its database row.
+- Part 24.3 lists currency first. The owner's order puts categories first. This slice follows the owner's order. Currency (M1A-01) is the next slice unless the owner says otherwise.
 
 **Still to build in Phase 1A (not started):** currencies and rates (M1A-01), EC members and recommending authorities (M1A-03), OPEX and CAPEX configuration including financial limits and the delegation matrix (M1A-04, M1A-05), and policy versions with maker-checker (M1A-06). Each gets its own checklist when it is built.
