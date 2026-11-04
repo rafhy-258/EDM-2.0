@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Configuration.Application</RootNamespace>
+    <Description>Configuration use cases: categories and subcategories, with validation, audit and the usage check.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Edm.Configuration.Domain\Edm.Configuration.Domain.csproj" />
+    <ProjectReference Include="..\..\Audit\Edm.Audit.Application\Edm.Audit.Application.csproj" />
+    <ProjectReference Include="..\..\Audit\Edm.Audit.Domain\Edm.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

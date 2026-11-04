@@ -31,6 +31,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Identity.Infrastructure
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Identity.Api", "src\Modules\Identity\Edm.Identity.Api\Edm.Identity.Api.csproj", "{1A000001-0000-4000-8000-00000000000E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Configuration.Domain", "src\Modules\Configuration\Edm.Configuration.Domain\Edm.Configuration.Domain.csproj", "{1A000001-0000-4000-8000-00000000000F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Configuration.Application", "src\Modules\Configuration\Edm.Configuration.Application\Edm.Configuration.Application.csproj", "{1A000001-0000-4000-8000-000000000010}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Configuration.Infrastructure", "src\Modules\Configuration\Edm.Configuration.Infrastructure\Edm.Configuration.Infrastructure.csproj", "{1A000001-0000-4000-8000-000000000011}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Edm.Configuration.Api", "src\Modules\Configuration\Edm.Configuration.Api\Edm.Configuration.Api.csproj", "{1A000001-0000-4000-8000-000000000012}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +101,22 @@ Global
 		{1A000001-0000-4000-8000-00000000000E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A000001-0000-4000-8000-00000000000E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A000001-0000-4000-8000-00000000000E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-00000000000F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-00000000000F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-000000000010}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-000000000010}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-000000000010}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-000000000010}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-000000000011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-000000000011}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-000000000011}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-000000000011}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A000001-0000-4000-8000-000000000012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A000001-0000-4000-8000-000000000012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A000001-0000-4000-8000-000000000012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A000001-0000-4000-8000-000000000012}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

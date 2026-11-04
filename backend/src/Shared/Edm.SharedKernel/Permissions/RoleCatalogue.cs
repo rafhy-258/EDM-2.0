@@ -3,7 +3,7 @@ namespace Edm.SharedKernel.Permissions;
 /// <summary>
 /// The stored roles of Master Prompt Part 20.2, expanded to explicit permission strings (docs/permission-matrix.md,
 /// section 2). Department Head is not stored: it comes from the hierarchy (Part 20.2).
-/// The System Administrator set includes four PROPOSED permissions (open question 1A-8), marked below.
+/// The System Administrator set includes four permissions approved on 04-Nov-2026 (open question 1A-8), marked below.
 /// </summary>
 public static class RoleCatalogue
 {
@@ -57,7 +57,7 @@ public static class RoleCatalogue
         ],
         [SystemAdministrator] =
         [
-            // PROPOSED (open question 1A-8): Part 20.2 grants no role these four. Without them the department,
+            // Approved 04-Nov-2026 (open question 1A-8). Part 20.2 grants no role these four. Without them the department,
             // branch, hierarchy and user screens are unreachable.
             "org.department.manage",
             "org.branch.manage",

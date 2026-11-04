@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Configuration.Api</RootNamespace>
+    <Description>Configuration HTTP API: categories and subcategories under /api/v1 (Master Prompt Part 21.2).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Edm.Configuration.Application\Edm.Configuration.Application.csproj" />
+    <ProjectReference Include="..\Edm.Configuration.Domain\Edm.Configuration.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.SharedKernel\Edm.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Edm.Web\Edm.Web.csproj" />
+  </ItemGroup>
+</Project>

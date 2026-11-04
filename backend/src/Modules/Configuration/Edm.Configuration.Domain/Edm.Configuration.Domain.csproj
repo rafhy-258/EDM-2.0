@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Edm.Configuration.Domain</RootNamespace>
+    <Description>Configuration domain: categories, subcategories and their validation rules (Master Prompt Part 5.1).</Description>
+  </PropertyGroup>
+</Project>

@@ -1,4 +1,7 @@
 using Edm.Audit.Api;
+using Edm.Configuration.Api;
+using Edm.Configuration.Application;
+using Edm.Configuration.Infrastructure;
 using Edm.Audit.Application;
 using Edm.Audit.Infrastructure;
 using Edm.Host.Health;
@@ -70,6 +73,8 @@ builder.Services.AddAuditInfrastructure(connectionString);
 builder.Services.AddAuditApplication();
 builder.Services.AddIdentityInfrastructure(connectionString);
 builder.Services.AddIdentityApplication(identityOptions);
+builder.Services.AddConfigurationInfrastructure(connectionString);
+builder.Services.AddConfigurationApplication();
 
 // Health (Part 2, observability).
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: new[] { "ready" });
@@ -91,6 +96,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check 
 
 app.MapAuditEndpoints();
 app.MapIdentityEndpoints();
+app.MapConfigurationEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
@@ -101,6 +107,7 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
     await app.Services.GetRequiredService<AuditSchemaMigrator>().MigrateAsync(CancellationToken.None);
     await app.Services.GetRequiredService<IdentitySchemaMigrator>().MigrateAsync(CancellationToken.None);
+    await app.Services.GetRequiredService<ConfigurationSchemaMigrator>().MigrateAsync(CancellationToken.None);
 
     // Creates the first administrator on a new database. Does nothing when an account already exists.
     using var bootstrapScope = app.Services.CreateScope();

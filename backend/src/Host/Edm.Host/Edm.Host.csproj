@@ -15,6 +15,9 @@
     <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Api\Edm.Audit.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Application\Edm.Audit.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Audit\Edm.Audit.Infrastructure\Edm.Audit.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Configuration\Edm.Configuration.Api\Edm.Configuration.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Configuration\Edm.Configuration.Application\Edm.Configuration.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Configuration\Edm.Configuration.Infrastructure\Edm.Configuration.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Api\Edm.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Application\Edm.Identity.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\Edm.Identity.Domain\Edm.Identity.Domain.csproj" />
