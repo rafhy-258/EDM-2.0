@@ -15,3 +15,11 @@
 
 ## Consequences
 - Volume is about 5 million events a year (Part 19). The table is indexed on tenant, timestamp, actor, module and entity.
+
+## Implementation note (Phase 0, added after the first build)
+
+- **Schema by versioned SQL, not EF Core migrations.** `backend/src/Modules/Audit/Edm.Audit.Infrastructure/Migrations/0001_audit_schema.sql` creates `audit_events`, its indexes, the append-only trigger (UPDATE, DELETE and TRUNCATE are rejected for every role, including the owner) and the CHECK constraints. EF Core migrations cannot express the trigger and the grants exactly, so Phase 0 uses versioned SQL. `AuditSchemaMigrator` applies the scripts once each, recorded in `schema_migrations`, under an advisory lock. EF Core migrations are used from Phase 1A onwards, and the decision for Phase 1A is recorded there.
+- **Runtime mapping by EF Core.** `AuditDbContext` maps the table with explicit snake_case column names. An integration test checks that the mapping and the SQL agree.
+- **Application role.** The integration test `The_application_role_can_append_and_read_but_cannot_change_or_delete` checks the grants the production role needs: INSERT and SELECT only.
+- **One write service.** `IAuditWriter` is the only path into the store. It fills the time (UTC), tenant, actor and correlation id from the request context. Modules never write to `audit_events` directly.
+- **Viewer.** `GET /api/v1/audit-events` requires `audit.view`. Each view is itself written as a `VIEW` event (Part 10.2).
