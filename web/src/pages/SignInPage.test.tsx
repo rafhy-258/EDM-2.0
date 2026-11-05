@@ -37,7 +37,10 @@ function renderPage(onDevRole?: (role: RoleKey) => void) {
 }
 
 function type(label: RegExp, value: string) {
-  fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  const input = /password/i.test(label.source)
+    ? screen.getByPlaceholderText('Enter your password')
+    : screen.getByRole('textbox', { name: label });
+  fireEvent.change(input, { target: { value } });
 }
 
 afterEach(() => {
@@ -81,6 +84,20 @@ describe('sign-in page', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Enter your username and password.');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('lets the user reveal and hide the password without changing its value', () => {
+    renderPage();
+    const password = screen.getByPlaceholderText('Enter your password');
+
+    type(/password/i, 'private passphrase');
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue('private passphrase');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(password).toHaveAttribute('type', 'password');
+    expect(password).toHaveValue('private passphrase');
   });
 
   it('offers the development role fixture only when a handler is given', () => {

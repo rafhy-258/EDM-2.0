@@ -1,6 +1,6 @@
 import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState, type ReactElement } from 'react';
+import { useMemo, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuditActivityPage } from '../audit/AuditActivityPage';
 import { CategoriesPage } from '../configuration/CategoriesPage';
@@ -118,23 +118,25 @@ function AppRoutes({
   readonly onSignOut: (() => void) | undefined;
 }) {
   const { user } = useSession();
-  const routes: ReactElement[] = user
-    ? [
-        <Route key="sign-in" path="/sign-in" element={<Navigate to="/workspace/overview" replace />} />,
-        <Route key="index" index element={<Navigate to="/workspace/overview" replace />} />,
-        ...NAVIGATION.filter((item) => item.phase === 'P1').map((item) => (
-          <Route key={item.id} path={item.route.slice(1)} element={<GuardedPage item={item} />} />
-        )),
-        <Route key="not-found" path="*" element={<NotFoundPage />} />,
-      ]
-    : [
-        <Route key="sign-in" path="/sign-in" element={<SignInPage onDevRole={onDevRole} />} />,
-        <Route key="signed-out" path="*" element={<Navigate to="/sign-in" replace />} />,
-      ];
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/sign-in" element={<SignInPage onDevRole={onDevRole} />} />
+        <Route path="*" element={<Navigate to="/sign-in" replace />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>
-      <Route element={<AppShell devRole={devControl} onSignOut={onSignOut} />}>{routes}</Route>
+      <Route element={<AppShell devRole={devControl} onSignOut={onSignOut} />}>
+        <Route path="/sign-in" element={<Navigate to="/workspace/overview" replace />} />
+        <Route index element={<Navigate to="/workspace/overview" replace />} />
+        {NAVIGATION.filter((item) => item.phase === 'P1').map((item) => (
+          <Route key={item.id} path={item.route.slice(1)} element={<GuardedPage item={item} />} />
+        ))}
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   );
 }

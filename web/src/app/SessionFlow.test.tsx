@@ -52,8 +52,8 @@ describe('session from the server (no development fixture)', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('heading', { name: 'Please sign in' })).toBeInTheDocument();
-    expect(navLabels()).toEqual([]);
+    expect(await screen.findByRole('heading', { name: 'Sign in to your account' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Main navigation' })).toBeNull();
     expect(screen.queryByRole('combobox', { name: 'Development role' })).toBeNull();
   });
 
@@ -76,7 +76,7 @@ describe('session from the server (no development fixture)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
 
-    expect(await screen.findByRole('heading', { name: 'Please sign in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to your account' })).toBeInTheDocument();
     const signOutCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith('/api/v1/auth/sign-out'));
     expect(signOutCall).toBeDefined();
   });

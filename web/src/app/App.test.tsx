@@ -63,8 +63,8 @@ describe('application shell', () => {
   it('shows the sign-in state, with no menu items, when there is no session (deny by default)', () => {
     openAt('/workspace/overview');
     selectRole('NONE');
-    expect(screen.getByRole('heading', { name: 'Please sign in' })).toBeInTheDocument();
-    expect(navLabels()).toEqual([]);
+    expect(screen.getByRole('heading', { name: 'Sign in to your account' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Main navigation' })).toBeNull();
   });
 
   it('shows the not-found page for an unknown address', () => {
