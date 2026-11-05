@@ -18,6 +18,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
+import { ApiError } from '../api/apiError';
 import { EmptyState, ErrorState, LoadingState } from './StateViews';
 
 /**
@@ -70,7 +71,9 @@ export function DataTable<T>({
   });
 
   if (isLoading) return <LoadingState label={`Loading ${caption}`} />;
-  if (error) return <ErrorState onRetry={onRetry} />;
+  if (error) {
+    return <ErrorState description={error instanceof ApiError ? error.message : undefined} onRetry={onRetry} />;
+  }
   if (!data || data.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }

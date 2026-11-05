@@ -2,6 +2,7 @@ import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { render, screen } from '@testing-library/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { describe, expect, it } from 'vitest';
+import { ApiError } from '../api/apiError';
 import { DataTable } from './DataTable';
 
 interface Row {
@@ -11,10 +12,10 @@ interface Row {
 
 const columns: ColumnDef<Row, unknown>[] = [{ id: 'name', header: 'Name', accessorFn: (row) => row.name }];
 
-function view(data: readonly Row[]) {
+function view(data: readonly Row[], error?: unknown) {
   return (
     <FluentProvider theme={webLightTheme}>
-      <DataTable caption="Things" data={data} columns={columns} emptyTitle="None" />
+      <DataTable caption="Things" data={data} columns={columns} emptyTitle="None" error={error} />
     </FluentProvider>
   );
 }
@@ -30,5 +31,11 @@ describe('DataTable', () => {
     }
 
     expect(screen.getByText('Finance Expenses')).toBeInTheDocument();
+  });
+
+  it('shows the API error message instead of masking it with a generic state', () => {
+    render(view([], new ApiError(401, 'EDM-AUTH-001', 'Please sign in.')));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Please sign in.');
   });
 });
