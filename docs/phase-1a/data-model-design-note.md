@@ -421,6 +421,7 @@ A missing record returns 404 with no EDM code, because Part 21.3 has no not-foun
 **Verification record (slice 1):**
 - Backend CI on 0455500: restore, build and tests passed. 103 unit, 12 architecture and 38 integration tests, none skipped. The first backend run (c3486ab) failed on a missing `Microsoft.AspNetCore.Builder` using. It was fixed in 0455500.
 - Web CI on c3486ab: typecheck, lint, 102 tests in 18 files, build and licence scan passed. Web checks were not re-run on 0455500, which changed only backend files.
+- Web CI on 9da898b passed. It includes the fix for the owner's "Page Unresponsive" freezes on the Categories and Activity Logs pages: the data table rebuilt its row array on every render, which looped once a table had at least one row. Rows are now memoised (daae8be, f5a12e0, 9da898b), with regression tests.
 - The owner's local run (PowerShell 5.1 with `scripts/dev.ps1`) is still to be done. It is not verified here.
 
 **Known gaps (slice 1), each tracked:**
