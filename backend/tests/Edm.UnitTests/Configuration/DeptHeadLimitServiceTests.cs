@@ -145,6 +145,9 @@ public sealed class DeptHeadLimitServiceTests
         var first = await rig.Service.SaveAsync(Save(50000m, Today), default);
         await rig.Service.SaveAsync(Save(75000m, Tomorrow, rowVersion: first.RowVersion), default);
 
+        // The open row is version 3. The earlier rows were 1 (closed) and 2 (closed). A client holding 1 must not match it.
+        Assert.Equal(3, rig.Store.Rows(DeptHeadLimitNatureTests.Opex).Single(r => r.IsActive).RowVersion);
+
         var error = await Assert.ThrowsAsync<EdmException>(() =>
             rig.Service.SaveAsync(Save(90000m, Tomorrow, rowVersion: first.RowVersion), default));
 

@@ -77,7 +77,7 @@ public sealed class NpgsqlDeptHeadLimitStore(string connectionString) : IDeptHea
 
             var insert = "INSERT INTO " + table + " (id, tenant_id, amount_pkr, description, effective_from, effective_to, "
                 + "is_active, row_version, created_at, created_by, updated_at, updated_by) "
-                + "VALUES (@id, @tenant, @amount, @description, @from, NULL, true, 1, @at, @by, @at, @by)";
+                + "VALUES (@id, @tenant, @amount, @description, @from, NULL, true, @version, @at, @by, @at, @by)";
 
             await ExecuteAsync(
                 connection,
@@ -89,6 +89,7 @@ public sealed class NpgsqlDeptHeadLimitStore(string connectionString) : IDeptHea
                 ("amount", created.AmountPkr),
                 ("description", created.Description),
                 ("from", created.EffectiveFrom),
+                ("version", created.RowVersion),
                 ("at", created.UpdatedAtUtc),
                 ("by", created.UpdatedBy));
 

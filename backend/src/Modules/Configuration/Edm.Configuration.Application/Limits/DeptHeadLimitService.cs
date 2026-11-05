@@ -66,6 +66,9 @@ public sealed class DeptHeadLimitService(
         var now = clock.UtcNow;
         var start = DeptHeadLimitRules.StartOfKarachiDay(input.EffectiveDate!.Value);
 
+        // Row versions must never repeat within one nature. A client holding the version of an earlier row must not
+        // match a later open row. So the new row takes a version above every row so far, including the one it closes.
+        var highest = rows.Count == 0 ? 0L : rows.Max(r => r.RowVersion);
         var created = new DeptHeadLimit(
             Guid.CreateVersion7(),
             tenant.TenantId,
@@ -75,7 +78,7 @@ public sealed class DeptHeadLimitService(
             start,
             EffectiveTo: null,
             IsActive: true,
-            RowVersion: 1,
+            RowVersion: Math.Max(highest, (open?.RowVersion ?? 0L) + 1L) + 1L,
             UpdatedAtUtc: now,
             UpdatedBy: actor.UserId);
 
