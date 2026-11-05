@@ -440,6 +440,7 @@ Built in this slice: migration `0005_configuration_dept_head_limits.sql` (tables
 **Decisions applied in this slice:**
 - One PKR limit per nature. OPEX and CAPEX are separate (owner decision on open item 6, the approved default).
 - At most one active row per nature and tenant. A unique partial index enforces it. A save closes the active row with `effective_to` set to the new effective date, then inserts the new row. Nothing is deleted.
+- Row versions never repeat within one nature. The new open row takes a version above every earlier row, so a client holding an old version cannot match a later row (found by CI; see the verification record).
 - The seeded default is `DefaultDeptHeadLimitPkr` = 20,000 (approved 1A-1). It applies while no row is in effect. It is a code constant until the `settings` table exists (section 2.8).
 - A saved amount must be greater than zero (1A-2), at most two decimals, below 10^16 (the column limit), and paired with a description of at most 500 characters.
 - The effective date is a Karachi (UTC+5) calendar date. It cannot be in the past, and cannot be earlier than the start date of the active row. It is stored as Karachi midnight.
@@ -481,4 +482,8 @@ Built in this slice: migration `0005_configuration_dept_head_limits.sql` (tables
 - The Route B boundary check (item 13) waits for routing (1C).
 - Currency (M1A-01) is still open: the owner has not decided its position in the order.
 
-**Verification record (slice 2):** pending CI. Web checks in the sandbox: typecheck, lint, 121 tests in 21 files, and the production build passed. The backend cannot be compiled in the sandbox (no .NET SDK). The backend C# was parse-checked with tree-sitter (89 files, no errors) and reviewed by reading. The backend CI result will be recorded here once it has run.
+**Verification record (slice 2):**
+- Backend CI on 4849197: restore, build and tests passed. 142 unit, 12 architecture and 50 integration tests, none skipped.
+- Web CI on e2011c8: typecheck, lint, tests, build and licence scan passed. Web files have not changed since.
+- The first backend run (e2011c8) failed on 3 unit and 1 integration test. The cause was a real bug, not a test mistake. A new open row started at row version 1, the same as the first row, so a client holding the old version could match it. The new row now takes a version above every earlier row for that nature (`DeptHeadLimitService.SaveAsync`; the store inserts that version). The fix was 164d185. An off-by-one in the same rule was corrected in 4849197.
+- Owner's own check: pending.
