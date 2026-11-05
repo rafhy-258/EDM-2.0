@@ -20,7 +20,10 @@ export async function toApiError(response: Response): Promise<ApiError> {
   const body: unknown = await response.json().catch(() => null);
   const record = isRecord(body) ? body : {};
   const code = typeof record['code'] === 'string' ? record['code'] : null;
-  const message = typeof record['message'] === 'string' ? record['message'] : 'The request could not be completed.';
+  const message =
+    [record['message'], record['detail'], record['title']].find(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0,
+    ) ?? 'The request could not be completed.';
   const errors = isRecord(record['errors']) ? record['errors'] : {};
   const fieldErrors: Record<string, readonly string[]> = {};
   for (const [field, messages] of Object.entries(errors)) {
