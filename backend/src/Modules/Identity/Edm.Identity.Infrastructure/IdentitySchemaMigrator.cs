@@ -95,6 +95,8 @@ public static class IdentityInfrastructureServices
         services.AddSingleton<Edm.Identity.Application.IUserAccountStore>(new NpgsqlUserAccountStore(connectionString));
         services.AddSingleton<Edm.Identity.Application.IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton(new IdentitySchemaMigrator(connectionString));
+        services.AddSingleton<Edm.Identity.Application.Organisation.IOrganisationStore>(
+            new Edm.Identity.Infrastructure.Organisation.NpgsqlOrganisationStore(connectionString));
         return services;
     }
 }

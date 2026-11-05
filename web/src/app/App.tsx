@@ -6,6 +6,8 @@ import { AuditActivityPage } from '../audit/AuditActivityPage';
 import { CategoriesPage } from '../configuration/CategoriesPage';
 import { SubcategoriesPage } from '../configuration/SubcategoriesPage';
 import { FinancialLimitsPage } from '../configuration/FinancialLimitsPage';
+import { DepartmentsPage } from '../organisation/DepartmentsPage';
+import { UsersPage } from '../organisation/UsersPage';
 import { ApiError } from '../api/apiError';
 import { AppShell, type DevRoleControl } from '../components/AppShell';
 import { ErrorState, LoadingState, NoPermissionState } from '../components/StateViews';
@@ -154,6 +156,12 @@ function GuardedPage({ item }: { readonly item: NavItemDef }) {
   }
   if (item.id === 'financial-limits') {
     return <FinancialLimitsPage />;
+  }
+  if (item.id === 'departments') {
+    return <DepartmentsPage />;
+  }
+  if (item.id === 'users') {
+    return <UsersPage />;
   }
   return <PlaceholderPage item={item} />;
 }

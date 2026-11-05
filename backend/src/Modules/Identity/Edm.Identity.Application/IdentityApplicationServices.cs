@@ -14,6 +14,8 @@ public static class IdentityApplicationServices
         services.AddSingleton(new LockoutPolicy(options.LockoutThreshold, TimeSpan.FromMinutes(options.LockoutMinutes)));
         services.AddScoped<SignInService>();
         services.AddScoped<BootstrapAdministrator>();
+        services.AddScoped<Edm.Identity.Application.Organisation.DepartmentService>();
+        services.AddScoped<Edm.Identity.Application.Organisation.DirectoryUserService>();
         return services;
     }
 }
