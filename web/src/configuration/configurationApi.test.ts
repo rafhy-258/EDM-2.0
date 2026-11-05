@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/apiError';
 import {
   createCategory,
+  createCurrency,
   deleteCategory,
   listCategories,
   listSubcategories,
+  changeCurrencyRate,
+  setCurrencyActiveState,
   updateCategory,
   type CategoryRecord,
 } from './configurationApi';
@@ -133,6 +136,61 @@ describe('configuration API client', () => {
 
     expect(calls[0]?.url).toBe('/api/v1/subcategories?includeInactive=false');
     expect(calls[1]?.url).toBe(`/api/v1/subcategories?categoryId=${travel.id}&includeInactive=true`);
+  });
+
+  it('sends currency rates as decimal strings and uses the currency endpoints', async () => {
+    const currency = {
+      id: '00000000-0000-7000-8000-000000000101',
+      code: 'USD',
+      name: 'US Dollar',
+      isBase: false,
+      isActive: true,
+      rate: '278.1234',
+      rowVersion: 1,
+      updatedAtUtc: '2026-11-04T05:00:00Z',
+      updatedBy: null,
+    };
+    const rate = {
+      id: '00000000-0000-7000-8000-000000000102',
+      rate: '280.1234',
+      effectiveFrom: '2026-11-05T05:00:00Z',
+      effectiveTo: null,
+      isActive: true,
+      rowVersion: 1,
+      updatedAtUtc: '2026-11-05T05:00:00Z',
+      updatedBy: null,
+    };
+    const calls = stubFetch((call) =>
+      call.url.endsWith('/rates') ? json(201, rate) : json(201, currency),
+    );
+
+    await createCurrency({ code: 'USD', name: 'US Dollar', rate: '278.1234' });
+    await changeCurrencyRate(currency.id, '280.1234', 1);
+
+    expect(calls[0]?.url).toBe('/api/v1/currencies');
+    expect(calls[0]?.body).toEqual({ code: 'USD', name: 'US Dollar', rate: '278.1234' });
+    expect(calls[1]?.url).toBe(`/api/v1/currencies/${currency.id}/rates`);
+    expect(calls[1]?.body).toEqual({ rate: '280.1234', rowVersion: 1 });
+  });
+
+  it('uses the specified activate and deactivate routes', async () => {
+    const currency = {
+      id: '00000000-0000-7000-8000-000000000101',
+      code: 'USD',
+      name: 'US Dollar',
+      isBase: false,
+      isActive: true,
+      rate: '278',
+      rowVersion: 2,
+      updatedAtUtc: '2026-11-04T05:00:00Z',
+      updatedBy: null,
+    };
+    const calls = stubFetch(() => json(200, currency));
+
+    await setCurrencyActiveState(currency.id, false, 2);
+
+    expect(calls[0]?.url).toBe(`/api/v1/currencies/${currency.id}/deactivate`);
+    expect(calls[0]?.body).toEqual({ rowVersion: 2 });
   });
 });
 

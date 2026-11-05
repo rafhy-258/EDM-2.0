@@ -159,7 +159,7 @@ public static class ConfigurationEndpoints
             .WithSummary("Delete a subcategory. Refused while it is used.");
 
         group.MapDeptHeadLimitEndpoints();
-
+        group.MapCurrencyEndpoints();
         return app;
     }
 }

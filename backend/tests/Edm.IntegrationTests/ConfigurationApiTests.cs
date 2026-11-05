@@ -10,8 +10,10 @@ namespace Edm.IntegrationTests;
 public sealed class ConfigurationApiTests(PostgresServer server) : IAsyncLifetime
 {
     private const string Admin = "config.category.view,config.category.manage,config.subcategory.manage,audit.view";
+    private const string CurrencyAdmin = "config.currency.manage,audit.view";
     private const string CategoryUrl = "/api/v1/categories";
     private const string SubcategoryUrl = "/api/v1/subcategories";
+    private const string CurrencyUrl = "/api/v1/currencies";
 
     private PostgresTestDatabase _db = null!;
     private EdmApiFactory _factory = null!;
@@ -182,6 +184,81 @@ public sealed class ConfigurationApiTests(PostgresServer server) : IAsyncLifetim
             .Single(c => c.GetProperty("field").GetString() == "name");
         Assert.Equal("Travel", nameChange.GetProperty("before").GetString());
         Assert.Equal("Air travel", nameChange.GetProperty("after").GetString());
+    }
+
+    [Fact]
+    public async Task A_currency_rate_change_keeps_history_and_audits_the_old_and_new_rate()
+    {
+        var created = await Send(HttpMethod.Post, CurrencyUrl, CurrencyAdmin,
+            new { code = "USD", name = "US Dollar", rate = "278.1234" });
+        Assert.Equal(HttpStatusCode.Created, created.Status);
+        Assert.Equal("USD", created.Body.GetProperty("code").GetString());
+        Assert.Equal("278.1234", created.Body.GetProperty("rate").GetString());
+        var id = created.Body.GetProperty("id").GetString();
+
+        var changed = await Send(HttpMethod.Post, $"{CurrencyUrl}/{id}/rates", CurrencyAdmin,
+            new { rate = "280.5", rowVersion = 1 });
+        Assert.Equal(HttpStatusCode.Created, changed.Status);
+
+        var history = await Send(HttpMethod.Get, $"{CurrencyUrl}/{id}/rates", CurrencyAdmin);
+        Assert.Equal(HttpStatusCode.OK, history.Status);
+        Assert.Equal(2, history.Body.GetArrayLength());
+        Assert.Equal("280.5", history.Body[0].GetProperty("rate").GetString());
+        Assert.True(history.Body[0].GetProperty("isActive").GetBoolean());
+        Assert.False(history.Body[1].GetProperty("isActive").GetBoolean());
+        Assert.Equal("278.1234", history.Body[1].GetProperty("rate").GetString());
+
+        var audit = await Send(HttpMethod.Get, "/api/v1/audit-events?module=Configuration&entityType=Currency", CurrencyAdmin);
+        var rateChange = audit.Body.GetProperty("items").EnumerateArray()
+            .Single(e => e.GetProperty("action").GetString() == "RateChanged");
+        var rateField = rateChange.GetProperty("changes").EnumerateArray()
+            .Single(c => c.GetProperty("field").GetString() == "rate");
+        Assert.Equal(278.1234m, rateField.GetProperty("before").GetDecimal());
+        Assert.Equal(280.5m, rateField.GetProperty("after").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Currency_picker_list_hides_inactive_rows_and_rate_history_blocks_delete()
+    {
+        var created = await Send(HttpMethod.Post, CurrencyUrl, CurrencyAdmin,
+            new { code = "EUR", name = "Euro", rate = "300" });
+        var id = created.Body.GetProperty("id").GetString();
+
+        var deactivated = await Send(HttpMethod.Post, $"{CurrencyUrl}/{id}/deactivate", CurrencyAdmin,
+            new { rowVersion = 1 });
+        Assert.Equal(HttpStatusCode.OK, deactivated.Status);
+        var activeCurrencies = (await Send(HttpMethod.Get, CurrencyUrl, CurrencyAdmin)).Body.EnumerateArray().ToArray();
+        Assert.DoesNotContain(activeCurrencies, item => item.GetProperty("id").GetString() == id);
+        var allCurrencies = (await Send(HttpMethod.Get, $"{CurrencyUrl}?includeInactive=true", CurrencyAdmin)).Body.EnumerateArray().ToArray();
+        Assert.Single(allCurrencies, item => item.GetProperty("id").GetString() == id);
+
+        var deleted = await Send(HttpMethod.Delete, $"{CurrencyUrl}/{id}?rowVersion=2", CurrencyAdmin);
+        Assert.Equal(HttpStatusCode.Conflict, deleted.Status);
+        Assert.Equal("EDM-CFG-003", deleted.Body.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Base_currency_is_seeded_and_cannot_be_deactivated_or_repriced()
+    {
+        var list = await Send(HttpMethod.Get, CurrencyUrl, CurrencyAdmin);
+        var pkr = list.Body.EnumerateArray().Single(item => item.GetProperty("code").GetString() == "PKR");
+        Assert.Equal("1", pkr.GetProperty("rate").GetString());
+
+        var id = pkr.GetProperty("id").GetString();
+        var deactivate = await Send(HttpMethod.Post, $"{CurrencyUrl}/{id}/deactivate", CurrencyAdmin, new { rowVersion = 1 });
+        var rate = await Send(HttpMethod.Post, $"{CurrencyUrl}/{id}/rates", CurrencyAdmin,
+            new { rate = "2", rowVersion = 1 });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, deactivate.Status);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, rate.Status);
+    }
+
+    [Fact]
+    public async Task Users_without_currency_permission_cannot_list_currencies()
+    {
+        var response = await Send(HttpMethod.Get, CurrencyUrl, "opex.request.create");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.Status);
+        Assert.Equal("EDM-AUTH-002", response.Body.GetProperty("code").GetString());
     }
 
     private async Task<string> CreateCategory(string name)

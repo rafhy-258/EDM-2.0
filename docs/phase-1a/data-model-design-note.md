@@ -376,7 +376,7 @@ Built in this slice: the `Configuration` module (Domain, Application, Infrastruc
 - A new subcategory needs an active category (the server refuses a missing or inactive one with a field error on `categoryId`).
 - `is_others` is in the table but not exposed. The Others routing is open point 13 in section 12.
 - Categories are not under maker-checker. Part 5.0 lists only the matrix, EC levels, limits and currency rates.
-- Build order. Part 24.3 lists currency first. The product owner asked for the configuration screens in the order categories, subcategories, financial limits, approval authorities and policies. This slice follows the owner's order. Currency and rates (M1A-01) are next, unless the owner asks for them first.
+- Build order. Part 24.3 lists currency first. The product owner asked for configuration screens in the order categories, subcategories, financial limits, approval authorities and policies. This category slice followed that order; currency administration was implemented in a later slice below.
 - Policy versions (Part 4.8) are not created yet. They depend on `policy_versions` in M1A-06. This is a known gap, not a choice.
 
 **13.1 Endpoints**
@@ -429,9 +429,9 @@ A missing record returns 404 with no EDM code, because Part 21.3 has no not-foun
 - The deactivation warning that lists active rules waits for rules (1B and 1C).
 - The Others option is blocked by open point 13.
 - The bootstrap default roles do not include EDM_ADMINISTRATOR (P0-7, not confirmed). An existing account needs the role added in its database row.
-- Part 24.3 lists currency first. The owner's order puts categories first. This slice follows the owner's order. Currency (M1A-01) is the next slice unless the owner says otherwise.
+- Part 24.3 lists currency first. The owner's order put categories first. Currency administration was subsequently implemented in the currency work record below.
 
-**Still to build in Phase 1A (not started):** currencies and rates (M1A-01), EC members and recommending authorities (M1A-03), OPEX and CAPEX configuration (EC levels, the delegation matrix) (M1A-04, M1A-05). Financial limits (M1A-04, part) are built in slice 2 below, and policy versions with maker-checker (M1A-06). Each gets its own checklist when it is built.
+**Still to build in Phase 1A:** complete the shared configuration tables and seeds (`settings`, `action_tag_sets`); EC members and recommending authorities (M1A-03); OPEX and CAPEX configuration (EC levels, the delegation matrix) (M1A-04, M1A-05); and policy versions with maker-checker (M1A-06). Currency and rates (M1A-01 currency portion) and department-head financial limits (M1A-04, part) are built below.
 
 ### Slice 2: department-head financial limits (M1A-04, part)
 
@@ -480,10 +480,31 @@ Built in this slice: migration `0005_configuration_dept_head_limits.sql` (tables
 - Maker-checker for limit changes (5.0) and policy versions (4.8) wait for M1A-06. Until then, changes apply straight away. The screen says so.
 - The default is a code constant, not a row in `settings`.
 - The Route B boundary check (item 13) waits for routing (1C).
-- Currency (M1A-01) is still open: the owner has not decided its position in the order.
+- Currency and rates were implemented in a later slice; see the currency work record below.
 
 **Verification record (slice 2):**
 - Backend CI on 4849197: restore, build and tests passed. 142 unit, 12 architecture and 50 integration tests, none skipped.
 - Web CI on e2011c8: typecheck, lint, tests, build and licence scan passed. Web files have not changed since.
 - The first backend run (e2011c8) failed on 3 unit and 1 integration test. The cause was a real bug, not a test mistake. A new open row started at row version 1, the same as the first row, so a client holding the old version could match it. The new row now takes a version above every earlier row for that nature (`DeptHeadLimitService.SaveAsync`; the store inserts that version). The fix was 164d185. An off-by-one in the same rule was corrected in 4849197.
 - Owner's own check: pending.
+
+### Currency and rate administration (M1A-01, currency portion)
+
+Implemented: migration `0006_configuration_currencies.sql`, tenant-scoped currency and effective-dated rate storage, protected PKR seed, validation and application services, permission-protected API, audit snapshots, and the Currencies tab under Financial Limits (Part 14.1 navigation is unchanged).
+
+**Behavior implemented:**
+- Currency codes are normalized to uppercase, unique per tenant including inactive rows, and are not updateable. Names are required and trimmed.
+- Rates use decimal values (`numeric(18,4)` in PostgreSQL and decimal strings at the web API boundary), must be positive, and allow at most four fractional digits. Updating a rate closes the current row and appends the replacement in one transaction.
+- PKR is seeded at 1, remains active, cannot be deleted, and its rate cannot be changed.
+- Active-only currency listing is the default. Administrators can include inactive rows, view rate history, activate, deactivate, edit a name, and delete with confirmation. Deletion is blocked by rate history or other known usage.
+- Every create, name change, rate change, activation/deactivation and deletion writes a Configuration audit event with the relevant old/new values.
+- API routes follow Part 21.2: `GET/POST /api/v1/currencies`, `PUT /api/v1/currencies/{id}`, `POST /api/v1/currencies/{id}/rates`, `POST /api/v1/currencies/{id}/activate`, `POST /api/v1/currencies/{id}/deactivate`, `GET /api/v1/currencies/{id}/rates`, and `DELETE /api/v1/currencies/{id}?rowVersion=`.
+
+**Acceptance checks:** `CurrencyServiceTests` covers code/rate validation, creation, initial rate, duplicate codes, append-only rate history, old/new audit values, stale versions, rate-history deletion blocking and PKR protection. `ConfigurationApiTests` covers API rate changes/history/audit, inactive listing, deletion blocking, PKR protection and permission denial. `configurationApi.test.ts` checks decimal-string payloads and endpoint routes. The API/web projects compile; focused currency unit tests pass; the PostgreSQL integration tests are added but still need a Docker-capable run.
+
+**Known gaps (not complete M1A-01):**
+- Maker-checker approval and policy-version creation are deferred to M1A-06. Changes currently apply immediately; the screen says so.
+- The `settings` and `action_tag_sets` tables/default seeds from migration-plan item M1A-01 are not included in this currency slice. The department-head default remains a code constant.
+- The migration seeds PKR for `TenantDefaults.SingleTenant`; the currency service also ensures the protected PKR currency/rate pair for the configured tenant before currency lists and creates.
+- Request-time currency/rate snapshots and the active-currency picker on request forms wait for the request module (Phase 1C).
+- Request/draft usage checks wait for the request tables; rate-history checks are active now.

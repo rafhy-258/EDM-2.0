@@ -51,8 +51,59 @@ export interface SubcategoryChangeInput {
   readonly rowVersion: number;
 }
 
+/** Currency conversion rates are strings to preserve all four supported decimal places in JavaScript. */
+export interface CurrencyRecord {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly isBase: boolean;
+  readonly isActive: boolean;
+  readonly rate: string | null;
+  readonly rowVersion: number;
+  readonly updatedAtUtc: string;
+  readonly updatedBy: string | null;
+}
+
+export interface CurrencyRateRecord {
+  readonly id: string;
+  readonly rate: string;
+  readonly effectiveFrom: string;
+  readonly effectiveTo: string | null;
+  readonly isActive: boolean;
+  readonly rowVersion: number;
+  readonly updatedAtUtc: string;
+  readonly updatedBy: string | null;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isCurrencyRecord(value: unknown): value is CurrencyRecord {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['code'] === 'string' &&
+    typeof value['name'] === 'string' &&
+    typeof value['isBase'] === 'boolean' &&
+    typeof value['isActive'] === 'boolean' &&
+    (typeof value['rate'] === 'string' || value['rate'] === null) &&
+    typeof value['rowVersion'] === 'number' &&
+    typeof value['updatedAtUtc'] === 'string'
+  );
+}
+
+function isCurrencyRateRecord(value: unknown): value is CurrencyRateRecord {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['rate'] === 'string' &&
+    typeof value['effectiveFrom'] === 'string' &&
+    (typeof value['effectiveTo'] === 'string' || value['effectiveTo'] === null) &&
+    typeof value['isActive'] === 'boolean' &&
+    typeof value['rowVersion'] === 'number' &&
+    typeof value['updatedAtUtc'] === 'string'
+  );
 }
 
 function isCategoryRecord(value: unknown): value is CategoryRecord {
@@ -185,6 +236,59 @@ export async function updateSubcategory(id: string, input: SubcategoryChangeInpu
 
 export async function deleteSubcategory(id: string, rowVersion: number): Promise<void> {
   await send('DELETE', withQuery(`/api/v1/subcategories/${encodeURIComponent(id)}`, { rowVersion: String(rowVersion) }));
+}
+
+export async function listCurrencies(includeInactive: boolean): Promise<readonly CurrencyRecord[]> {
+  const body = await send('GET', withQuery('/api/v1/currencies', { includeInactive: String(includeInactive) }));
+  if (!Array.isArray(body) || !body.every(isCurrencyRecord)) {
+    throw unexpectedResponse(200);
+  }
+  return body;
+}
+
+export async function createCurrency(input: { readonly code: string; readonly name: string; readonly rate: string }): Promise<CurrencyRecord> {
+  const body = await send('POST', '/api/v1/currencies', input);
+  if (!isCurrencyRecord(body)) {
+    throw unexpectedResponse(201);
+  }
+  return body;
+}
+
+export async function updateCurrency(id: string, name: string, rowVersion: number): Promise<CurrencyRecord> {
+  const body = await send('PUT', `/api/v1/currencies/${encodeURIComponent(id)}`, { name, rowVersion });
+  if (!isCurrencyRecord(body)) {
+    throw unexpectedResponse(200);
+  }
+  return body;
+}
+
+export async function changeCurrencyRate(id: string, rate: string, rowVersion: number): Promise<CurrencyRateRecord> {
+  const body = await send('POST', `/api/v1/currencies/${encodeURIComponent(id)}/rates`, { rate, rowVersion });
+  if (!isCurrencyRateRecord(body)) {
+    throw unexpectedResponse(201);
+  }
+  return body;
+}
+
+export async function listCurrencyRates(id: string): Promise<readonly CurrencyRateRecord[]> {
+  const body = await send('GET', `/api/v1/currencies/${encodeURIComponent(id)}/rates`);
+  if (!Array.isArray(body) || !body.every(isCurrencyRateRecord)) {
+    throw unexpectedResponse(200);
+  }
+  return body;
+}
+
+export async function setCurrencyActiveState(id: string, isActive: boolean, rowVersion: number): Promise<CurrencyRecord> {
+  const action = isActive ? 'activate' : 'deactivate';
+  const body = await send('POST', `/api/v1/currencies/${encodeURIComponent(id)}/${action}`, { rowVersion });
+  if (!isCurrencyRecord(body)) {
+    throw unexpectedResponse(200);
+  }
+  return body;
+}
+
+export async function deleteCurrency(id: string, rowVersion: number): Promise<void> {
+  await send('DELETE', withQuery(`/api/v1/currencies/${encodeURIComponent(id)}`, { rowVersion: String(rowVersion) }));
 }
 
 /** OPEX and CAPEX each have their own department-head limit (Master Prompt 5.5). */

@@ -130,6 +130,44 @@ describe('Financial limits screen', () => {
     await waitFor(() => expect(calls.some((c) => c.url === '/api/v1/dept-head-limits?nature=CAPEX')).toBe(true));
   });
 
+  it('creates a currency from the Financial Limits currency tab without converting its rate to a number', async () => {
+    const savedCurrency = {
+      id: '00000000-0000-7000-8000-000000000101',
+      code: 'USD',
+      name: 'US Dollar',
+      isBase: false,
+      isActive: true,
+      rate: '278.1234',
+      rowVersion: 1,
+      updatedAtUtc: '2026-11-05T05:00:00Z',
+      updatedBy: null,
+    };
+    const calls = stubApi((call) => {
+      if (call.method === 'POST') {
+        return { status: 201, body: savedCurrency };
+      }
+      if (call.url.startsWith('/api/v1/currencies')) {
+        return { status: 200, body: [] };
+      }
+      return { status: 200, body: defaultSummary };
+    });
+    renderPage(administrator);
+
+    await screen.findByText('PKR 20,000.00');
+    fireEvent.click(screen.getByRole('tab', { name: 'Currencies' }));
+    fireEvent.click(await enabledButton('New currency'));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Currency code/), { target: { value: 'usd' } });
+    fireEvent.change(within(dialog).getByLabelText(/Currency name/), { target: { value: 'US Dollar' } });
+    fireEvent.change(within(dialog).getByLabelText(/Rate \(PKR per currency unit\)/), { target: { value: '278.1234' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    const post = calls.find((call) => call.method === 'POST');
+    expect(post?.url).toBe('/api/v1/currencies');
+    expect(post?.body).toEqual({ code: 'USD', name: 'US Dollar', rate: '278.1234' });
+  });
+
   it('sets a new limit with the amount, the Karachi date and no version when none is active', async () => {
     let saved = false;
     const calls = stubApi((call) => {

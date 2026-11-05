@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DataTable } from '../components/DataTable';
 import { useSession } from '../session/session';
 import { DeptHeadLimitDialog } from './DeptHeadLimitDialog';
+import { CurrencyManagement } from './CurrencyManagement';
 import {
   deactivateDeptHeadLimit,
   getDeptHeadLimit,
@@ -33,8 +34,10 @@ function rowStatus(row: DeptHeadLimitRecord, now: number): string {
 export function FinancialLimitsPage() {
   const { hasPermission } = useSession();
   const canManage = hasPermission('config.limit.manage');
+  const canManageCurrencies = hasPermission('config.currency.manage');
   const queryClient = useQueryClient();
-  const [nature, setNature] = useState<LimitNature>('OPEX');
+  const [tab, setTab] = useState<LimitNature | 'CURRENCIES'>('OPEX');
+  const nature: LimitNature = tab === 'CAPEX' ? 'CAPEX' : 'OPEX';
   const [editing, setEditing] = useState(false);
   const [ending, setEnding] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -42,6 +45,7 @@ export function FinancialLimitsPage() {
   const query = useQuery({
     queryKey: ['configuration', 'dept-head-limit', nature],
     queryFn: () => getDeptHeadLimit(nature),
+    enabled: tab !== 'CURRENCIES',
     retry: (failureCount, error) => !(error instanceof ApiError) && failureCount < 2,
   });
   const summary = query.data;
@@ -136,6 +140,23 @@ export function FinancialLimitsPage() {
           Configuration and Policies
         </Badge>
       </div>
+      <TabList
+        selectedValue={tab}
+        onTabSelect={(_: SelectTabEvent, data: SelectTabData) => {
+          const value = String(data.value);
+          setTab(value === 'CAPEX' ? 'CAPEX' : value === 'CURRENCIES' ? 'CURRENCIES' : 'OPEX');
+        }}
+        aria-label="Limit type"
+      >
+        <Tab value="OPEX">OPEX</Tab>
+        <Tab value="CAPEX">CAPEX</Tab>
+        {canManageCurrencies ? <Tab value="CURRENCIES">Currencies</Tab> : null}
+      </TabList>
+
+      {tab === 'CURRENCIES' ? (
+        <CurrencyManagement />
+      ) : (
+        <>
       <Text>
         Requests at or below the department-head limit go to the Department Head only. OPEX and CAPEX each have their own
         limit. Setting a new limit keeps the old one as history.
@@ -143,15 +164,6 @@ export function FinancialLimitsPage() {
       <Text className={styles.muted}>
         Changes apply as soon as they are saved. A second approver is not required yet.
       </Text>
-
-      <TabList
-        selectedValue={nature}
-        onTabSelect={(_: SelectTabEvent, data: SelectTabData) => setNature(String(data.value) === 'CAPEX' ? 'CAPEX' : 'OPEX')}
-        aria-label="Limit type"
-      >
-        <Tab value="OPEX">OPEX</Tab>
-        <Tab value="CAPEX">CAPEX</Tab>
-      </TabList>
 
       {summary ? (
         <div className={styles.cards}>
@@ -229,6 +241,8 @@ export function FinancialLimitsPage() {
         onConfirm={() => end.mutate()}
         onCancel={() => setEnding(false)}
       />
+        </>
+      )}
     </section>
   );
 }

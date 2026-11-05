@@ -12,14 +12,15 @@ The authoritative specification is [docs/EDM2-Master-Prompt.md](docs/EDM2-Master
 | Phase 0 design note | Approved by the product owner, 04-Nov-2026 (`docs/phase-0/design-note.md`). SSO provider (Q25) still open |
 | Architecture decision records | 11 records, see `docs/adr/`. ADR-0003 and ADR-0010 accepted 04-Nov-2026 |
 | Permission matrix (Part 20) | Drafted (`docs/permission-matrix.md`) |
-| Phase 1A data-model design note | Drafted, awaiting approval (`docs/phase-1a/data-model-design-note.md`) |
+| Phase 1A data-model design note | Approved by the product owner, 04-Nov-2026 (`docs/phase-1a/data-model-design-note.md`) |
 | Open questions for the product owner | Batch ready (`docs/open-questions.md`) |
 | Web application shell (`web/`) | Built: navigation from Part 14.1, design-system primitives, role-based menu, Activity Logs viewer (`/audit/activity`), tests |
-| Backend (`backend/`) | Built: shared kernel, session-cookie authentication, Audit module (store, writer, viewer API), Identity module (local database accounts, sign-in with lockout, first-administrator bootstrap), Configuration module (categories and subcategories, Phase 1A slice 1), Host. Sign-in is built and backend CI was green on b5e6f57 (112 tests). Categories and subcategories (Phase 1A slice 1) passed backend CI on 0455500 (103 unit, 12 architecture, 38 integration tests). Department-head financial limits for OPEX and CAPEX (Phase 1A slice 2) passed backend CI on 4849197 (142 unit, 12 architecture, 50 integration tests) and web CI on e2011c8. Organisation directory, departments and users (Phase 1A slice 3a) passed backend CI on d829a47 (176 unit, 12 architecture, 59 integration tests) and web CI on 9eae339. SSO waits for Q25. |
-| Database migrations | Audit, identity, organisation directory (departments and users), categories and department-head limit schemas. Currency, EC, RA, delegation and policy migrations follow in Phase 1A |
-| One-command local start | `scripts/dev.ps1` for Windows PowerShell, with PostgreSQL already running. Not yet run by the agent (no .NET or PowerShell in the sandbox) |
+| Backend (`backend/`) | Built: shared kernel, session-cookie authentication, Audit module (store, writer, viewer API), Identity module (local database accounts, sign-in with lockout, first-administrator bootstrap), Configuration module (currencies and rates, categories and subcategories, department-head limits), Organisation directory (departments and users), Host. SSO waits for Q25. |
+| Database migrations | Audit, identity, organisation directory, categories, department-head limits, currencies and currency rates. EC, RA, delegation, shared settings/action-tag sets and policy migrations remain |
+| Currency and rates (M1A-01) | Currency API and administration tab implemented; backend unit tests and web checks run. PostgreSQL integration tests still need a Docker-capable run. Maker-checker/policy versioning, settings/action-tag tables, and request-time currency snapshots remain future work |
+| One-command local start | `scripts/dev.ps1` is available for Windows PowerShell, with PostgreSQL already running; the owner confirmed the local department workflow works |
 
-No business module (currency, categories, routing, requests) is built yet. Phase 0 is in progress; see the done-criteria table in the design note, section 11.
+Currency/rate administration, category configuration and department-head limits are built. Routing and requests are not built yet. See the Phase 1A checklist in the data-model design note.
 
 ## Repository layout
 
