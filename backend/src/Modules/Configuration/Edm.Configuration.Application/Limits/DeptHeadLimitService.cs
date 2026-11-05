@@ -78,7 +78,7 @@ public sealed class DeptHeadLimitService(
             start,
             EffectiveTo: null,
             IsActive: true,
-            RowVersion: Math.Max(highest, (open?.RowVersion ?? 0L) + 1L) + 1L,
+            RowVersion: Math.Max(highest, open is null ? highest : open.RowVersion + 1L) + 1L,
             UpdatedAtUtc: now,
             UpdatedBy: actor.UserId);
 
