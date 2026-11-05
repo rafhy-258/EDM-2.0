@@ -93,11 +93,11 @@ public sealed class NpgsqlApprovalAuthorityStore(string connectionString) : IApp
             FROM ec_members m
             JOIN users u ON u.id = m.user_id AND u.tenant_id = m.tenant_id
             WHERE m.tenant_id = @tenant AND m.deleted_at IS NULL
-              AND (@designation IS NULL OR m.designation = @designation)
+              AND (CAST(@designation AS text) IS NULL OR m.designation = @designation)
               AND (@include_inactive OR m.is_active)
-              AND (@search IS NULL OR strpos(lower(u.name), lower(@search)) > 0
-                   OR strpos(lower(u.employee_id), lower(@search)) > 0
-                   OR strpos(lower(m.designation), lower(@search)) > 0)
+              AND (CAST(@search AS text) IS NULL OR strpos(lower(u.name), lower(CAST(@search AS text))) > 0
+                   OR strpos(lower(u.employee_id), lower(CAST(@search AS text))) > 0
+                   OR strpos(lower(m.designation), lower(CAST(@search AS text))) > 0)
             ORDER BY m.designation, lower(u.name)
             """;
         return await QueryAsync(
@@ -221,10 +221,10 @@ public sealed class NpgsqlApprovalAuthorityStore(string connectionString) : IApp
             JOIN users u ON u.id = r.user_id AND u.tenant_id = r.tenant_id
             WHERE r.tenant_id = @tenant AND r.deleted_at IS NULL
               AND (@include_inactive OR r.is_active)
-              AND (@search IS NULL OR strpos(lower(r.title), lower(@search)) > 0
-                   OR strpos(lower(u.name), lower(@search)) > 0
-                   OR strpos(lower(u.employee_id), lower(@search)) > 0
-                   OR strpos(lower(d.name), lower(@search)) > 0)
+              AND (CAST(@search AS text) IS NULL OR strpos(lower(r.title), lower(CAST(@search AS text))) > 0
+                   OR strpos(lower(u.name), lower(CAST(@search AS text))) > 0
+                   OR strpos(lower(u.employee_id), lower(CAST(@search AS text))) > 0
+                   OR strpos(lower(d.name), lower(CAST(@search AS text))) > 0)
             ORDER BY lower(d.name), lower(r.title), lower(u.name)
             """;
         return await QueryAsync(sql, ReadAuthority, cancellationToken,

@@ -293,6 +293,14 @@ public sealed class ConfigurationApiTests(PostgresServer server) : IAsyncLifetim
         Assert.Equal(HttpStatusCode.Created, member.Status);
         Assert.Equal("Avery Khan", member.Body.GetProperty("userName").GetString());
 
+        var memberList = await Send(HttpMethod.Get, "/api/v1/ec-members", "config.ec.pool.manage");
+        Assert.Equal(HttpStatusCode.OK, memberList.Status);
+        Assert.Single(memberList.Body.EnumerateArray());
+        var searchedMembers = await Send(
+            HttpMethod.Get, "/api/v1/ec-members?search=Avery", "config.ec.pool.manage");
+        Assert.Equal(HttpStatusCode.OK, searchedMembers.Status);
+        Assert.Single(searchedMembers.Body.EnumerateArray());
+
         var deactivated = await Send(HttpMethod.Put,
             $"/api/v1/ec-members/{member.Body.GetProperty("id").GetGuid()}",
             "config.ec.pool.manage",
@@ -314,6 +322,15 @@ public sealed class ConfigurationApiTests(PostgresServer server) : IAsyncLifetim
             new { title = "Finance Review", departmentId = financeId, userId = financeUserId });
         Assert.Equal(HttpStatusCode.Created, authority.Status);
         Assert.Equal("Recommending Authority", authority.Body.GetProperty("actionTagSetName").GetString());
+
+        var authorityList = await Send(
+            HttpMethod.Get, "/api/v1/recommending-authorities", "config.ra.manage");
+        Assert.Equal(HttpStatusCode.OK, authorityList.Status);
+        Assert.Single(authorityList.Body.EnumerateArray());
+        var searchedAuthorities = await Send(
+            HttpMethod.Get, "/api/v1/recommending-authorities?search=Finance", "config.ra.manage");
+        Assert.Equal(HttpStatusCode.OK, searchedAuthorities.Status);
+        Assert.Single(searchedAuthorities.Body.EnumerateArray());
 
         var mismatched = await Send(HttpMethod.Post, "/api/v1/recommending-authorities", "config.ra.manage",
             new { title = "Operations Review", departmentId = operationsId, userId = financeUserId });
