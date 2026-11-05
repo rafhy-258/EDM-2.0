@@ -63,6 +63,38 @@ function Write-Step([string]$message) {
     Write-Host "==> $message" -ForegroundColor Cyan
 }
 
+# Fail before starting the API if Vite cannot bind its configured port.
+$webPortOwner = $null
+$netstat = Join-Path $env:SystemRoot 'System32\netstat.exe'
+if (Test-Path $netstat) {
+    $webListener = & $netstat -ano -p tcp |
+        Select-String -Pattern '^\s*TCP\s+\S+:5173\s+\S+\s+LISTENING\s+\d+\s*$' |
+        Select-Object -First 1
+    if ($webListener -and $webListener.Line -match '\s+(\d+)\s*$') {
+        $webPortOwner = $Matches[1]
+    }
+}
+if (-not $webPortOwner) {
+    $portProbe = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Any, 5173)
+    $probeStarted = $false
+    try {
+        $portProbe.Start()
+        $probeStarted = $true
+    }
+    catch {
+        $webPortOwner = 'unknown'
+    }
+    finally {
+        if ($probeStarted) { $portProbe.Stop() }
+    }
+}
+if ($webPortOwner) {
+    if ($webPortOwner -eq 'unknown') {
+        Stop-Script 'Port 5173 is already in use. Stop the process using it, then run this script again.'
+    }
+    Stop-Script "Port 5173 is already in use (process id $webPortOwner). Stop that process, then run this script again. In PowerShell: Stop-Process -Id $webPortOwner"
+}
+
 # ---- 1. Tools -------------------------------------------------------------------------------
 
 Write-Step 'Checking tools'
@@ -302,8 +334,20 @@ while ((Get-Date) -lt $deadline) {
 
 function Stop-Api {
     if ($api -and -not $api.HasExited) {
-        # /T stops the dotnet run child process as well.
-        & taskkill /T /PID $api.Id /F | Out-Null
+        # Use the system path because System32 may not be on this shell's PATH.
+        $taskkill = Join-Path $env:SystemRoot 'System32\taskkill.exe'
+        if (Test-Path $taskkill) {
+            # /T stops the dotnet run child process as well.
+            & $taskkill /T /PID $api.Id /F | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Could not stop the API process tree with taskkill.exe (exit code $LASTEXITCODE). Stopping the API process directly."
+                Stop-Process -Id $api.Id -Force -ErrorAction SilentlyContinue
+            }
+        }
+        else {
+            Write-Warning 'taskkill.exe was not found. Stopping the API process directly.'
+            Stop-Process -Id $api.Id -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 

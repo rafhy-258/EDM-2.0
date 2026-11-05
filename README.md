@@ -41,7 +41,7 @@ Requires the .NET 10 SDK, Node.js 22 or later, and PostgreSQL 18 running on this
 powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1
 ```
 
-The `-ExecutionPolicy Bypass` option is needed on a default Windows install, where scripts are blocked. It applies to this run only. The script checks the SDK and Node, installs web packages on first run, asks for the PostgreSQL password (hidden, kept in memory only), creates the `edm` database if it is missing, and starts the API with its database schema applied. Then it starts the web dev server. Open http://localhost:5173. Logs are in `artifacts\local\`. Press Ctrl+C to stop both. Options are listed in the script header (`Get-Help .\scripts\dev.ps1`).
+The `-ExecutionPolicy Bypass` option is needed on a default Windows install, where scripts are blocked. It applies to this run only. The script checks the SDK and Node, installs web packages on first run, asks for the PostgreSQL password (hidden, kept in memory only), creates the `edm` database if it is missing, and starts the API with its database schema applied. Then it starts the web dev server. Open http://localhost:5173. Logs are in `artifacts\local\`. Press Ctrl+C to stop both. If port 5173 is already in use, stop the reported process before rerunning the script. Options are listed in the script header (`Get-Help .\scripts\dev.ps1`).
 
 On a new database the script asks you to create the first administrator account (username, then a hidden password of at least 12 characters). Sign in with that account at http://localhost:5173. The password is never written to disk.
 
