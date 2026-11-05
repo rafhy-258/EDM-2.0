@@ -244,6 +244,21 @@ else {
 
 Write-Step 'Starting the API (first build can take a few minutes)'
 
+# If something already listens on the API port, it is an earlier API run. It would answer the readiness check below
+# and the web server would talk to the old code (for example, the Financial Limits screen would show "Something went
+# wrong" because the old API has no /dept-head-limits routes). Stop here instead, so the old run is stopped first.
+$busy = $null
+try {
+    $busy = Get-NetTCPConnection -LocalPort $ApiPort -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+}
+catch {
+    # Get-NetTCPConnection is not available everywhere. The readiness check below still catches most cases.
+    $busy = $null
+}
+if ($busy) {
+    Stop-Script "Port $ApiPort is already in use by an earlier API run (process id $($busy.OwningProcess)). Stop it, then run this script again. In PowerShell: Get-Process Edm.Host -ErrorAction SilentlyContinue | Stop-Process -Force"
+}
+
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $apiLog = Join-Path $logDir 'api.log'
 $apiErrLog = Join-Path $logDir 'api.err.log'
@@ -290,6 +305,11 @@ function Stop-Api {
         # /T stops the dotnet run child process as well.
         & taskkill /T /PID $api.Id /F | Out-Null
     }
+}
+
+# The readiness check must come from the API this script started. If that process has already exited, it failed.
+if ($ready -and $api.HasExited) {
+    $ready = $false
 }
 
 if (-not $ready) {
