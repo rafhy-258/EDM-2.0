@@ -2,6 +2,7 @@ using Edm.Audit.Api;
 using Edm.Configuration.Api;
 using Edm.Configuration.Application;
 using Edm.Configuration.Infrastructure;
+using Edm.Configuration.Application.Authorities;
 using Edm.Audit.Application;
 using Edm.Audit.Infrastructure;
 using Edm.Host.Health;
@@ -10,6 +11,7 @@ using Edm.Identity.Application;
 using Edm.Identity.Domain;
 using Edm.Identity.Infrastructure;
 using Edm.Host.Middleware;
+using Edm.Host.Configuration;
 using Edm.SharedKernel.Context;
 using Edm.Web.Authentication;
 using Edm.Web.Authorization;
@@ -75,6 +77,7 @@ builder.Services.AddIdentityInfrastructure(connectionString);
 builder.Services.AddIdentityApplication(identityOptions);
 builder.Services.AddConfigurationInfrastructure(connectionString);
 builder.Services.AddConfigurationApplication();
+builder.Services.AddScoped<IApprovalAuthorityDirectory, IdentityApprovalAuthorityDirectory>();
 
 // Health (Part 2, observability).
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: new[] { "ready" });

@@ -382,3 +382,212 @@ export async function saveDeptHeadLimit(input: DeptHeadLimitSaveInput): Promise<
 export async function deactivateDeptHeadLimit(nature: LimitNature, rowVersion: number): Promise<void> {
   await send('POST', '/api/v1/dept-head-limits/deactivate', { nature, rowVersion });
 }
+
+export interface ApprovalDirectoryUserRecord {
+  readonly id: string;
+  readonly employeeId: string;
+  readonly name: string;
+  readonly departmentId: string;
+  readonly departmentName: string;
+}
+
+export interface ApprovalDirectoryDepartmentRecord {
+  readonly id: string;
+  readonly name: string;
+}
+
+export interface EcMemberRecord {
+  readonly id: string;
+  readonly userId: string;
+  readonly employeeId: string;
+  readonly userName: string;
+  readonly departmentId: string;
+  readonly departmentName: string;
+  readonly designation: string;
+  readonly designationLabel: string;
+  readonly isActive: boolean;
+  readonly rowVersion: number;
+  readonly updatedAtUtc: string;
+  readonly updatedBy: string | null;
+}
+
+export interface RecommendingAuthorityRecord {
+  readonly id: string;
+  readonly title: string;
+  readonly departmentId: string;
+  readonly departmentName: string;
+  readonly userId: string;
+  readonly employeeId: string;
+  readonly userName: string;
+  readonly defaultActionTagSetId: string;
+  readonly actionTagSetName: string;
+  readonly isActive: boolean;
+  readonly rowVersion: number;
+  readonly updatedAtUtc: string;
+  readonly updatedBy: string | null;
+}
+
+export interface ActionTagSetRecord {
+  readonly id: string;
+  readonly name: string;
+  readonly designation: string;
+  readonly designationLabel: string;
+  readonly allowedActions: readonly string[];
+  readonly isActive: boolean;
+  readonly rowVersion: number;
+  readonly updatedAtUtc: string;
+  readonly updatedBy: string | null;
+}
+
+function isApprovalDirectoryUser(value: unknown): value is ApprovalDirectoryUserRecord {
+  return isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['employeeId'] === 'string' &&
+    typeof value['name'] === 'string' &&
+    typeof value['departmentId'] === 'string' &&
+    typeof value['departmentName'] === 'string';
+}
+
+function isApprovalDirectoryDepartment(value: unknown): value is ApprovalDirectoryDepartmentRecord {
+  return isRecord(value) && typeof value['id'] === 'string' && typeof value['name'] === 'string';
+}
+
+function isEcMemberRecord(value: unknown): value is EcMemberRecord {
+  return isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['userId'] === 'string' &&
+    typeof value['employeeId'] === 'string' &&
+    typeof value['userName'] === 'string' &&
+    typeof value['departmentId'] === 'string' &&
+    typeof value['departmentName'] === 'string' &&
+    typeof value['designation'] === 'string' &&
+    typeof value['designationLabel'] === 'string' &&
+    typeof value['isActive'] === 'boolean' &&
+    typeof value['rowVersion'] === 'number' &&
+    typeof value['updatedAtUtc'] === 'string';
+}
+
+function isRecommendingAuthorityRecord(value: unknown): value is RecommendingAuthorityRecord {
+  return isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['title'] === 'string' &&
+    typeof value['departmentId'] === 'string' &&
+    typeof value['departmentName'] === 'string' &&
+    typeof value['userId'] === 'string' &&
+    typeof value['employeeId'] === 'string' &&
+    typeof value['userName'] === 'string' &&
+    typeof value['defaultActionTagSetId'] === 'string' &&
+    typeof value['actionTagSetName'] === 'string' &&
+    typeof value['isActive'] === 'boolean' &&
+    typeof value['rowVersion'] === 'number' &&
+    typeof value['updatedAtUtc'] === 'string';
+}
+
+function isActionTagSetRecord(value: unknown): value is ActionTagSetRecord {
+  return isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['name'] === 'string' &&
+    typeof value['designation'] === 'string' &&
+    typeof value['designationLabel'] === 'string' &&
+    Array.isArray(value['allowedActions']) &&
+    value['allowedActions'].every((action) => typeof action === 'string') &&
+    typeof value['isActive'] === 'boolean' &&
+    typeof value['rowVersion'] === 'number' &&
+    typeof value['updatedAtUtc'] === 'string';
+}
+
+export async function listEcMembers(
+  designation: string | undefined,
+  includeInactive: boolean,
+  search: string,
+): Promise<readonly EcMemberRecord[]> {
+  const body = await send('GET', withQuery('/api/v1/ec-members', {
+    designation,
+    includeInactive: String(includeInactive),
+    search: search.trim() || undefined,
+  }));
+  if (!Array.isArray(body) || !body.every(isEcMemberRecord)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function listApprovalDirectoryUsers(
+  route: 'ec-members' | 'recommending-authorities',
+  departmentId?: string,
+): Promise<readonly ApprovalDirectoryUserRecord[]> {
+  const body = await send('GET', withQuery(`/api/v1/${route}/candidates`, { departmentId }));
+  if (!Array.isArray(body) || !body.every(isApprovalDirectoryUser)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function listApprovalDepartments(): Promise<readonly ApprovalDirectoryDepartmentRecord[]> {
+  const body = await send('GET', '/api/v1/recommending-authorities/departments');
+  if (!Array.isArray(body) || !body.every(isApprovalDirectoryDepartment)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function createEcMember(input: { readonly userId: string; readonly designation: string }): Promise<EcMemberRecord> {
+  const body = await send('POST', '/api/v1/ec-members', input);
+  if (!isEcMemberRecord(body)) throw unexpectedResponse(201);
+  return body;
+}
+
+export async function updateEcMember(id: string, isActive: boolean, rowVersion: number): Promise<EcMemberRecord> {
+  const body = await send('PUT', `/api/v1/ec-members/${encodeURIComponent(id)}`, { isActive, rowVersion });
+  if (!isEcMemberRecord(body)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function deleteEcMember(id: string, rowVersion: number): Promise<void> {
+  await send('DELETE', withQuery(`/api/v1/ec-members/${encodeURIComponent(id)}`, { rowVersion: String(rowVersion) }));
+}
+
+export async function listRecommendingAuthorities(
+  includeInactive: boolean,
+  search: string,
+): Promise<readonly RecommendingAuthorityRecord[]> {
+  const body = await send('GET', withQuery('/api/v1/recommending-authorities', {
+    includeInactive: String(includeInactive),
+    search: search.trim() || undefined,
+  }));
+  if (!Array.isArray(body) || !body.every(isRecommendingAuthorityRecord)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function createRecommendingAuthority(input: {
+  readonly title: string;
+  readonly departmentId: string;
+  readonly userId: string;
+}): Promise<RecommendingAuthorityRecord> {
+  const body = await send('POST', '/api/v1/recommending-authorities', input);
+  if (!isRecommendingAuthorityRecord(body)) throw unexpectedResponse(201);
+  return body;
+}
+
+export async function updateRecommendingAuthority(
+  id: string,
+  input: { readonly departmentId: string; readonly userId: string; readonly isActive: boolean; readonly rowVersion: number },
+): Promise<RecommendingAuthorityRecord> {
+  const body = await send('PUT', `/api/v1/recommending-authorities/${encodeURIComponent(id)}`, input);
+  if (!isRecommendingAuthorityRecord(body)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function deleteRecommendingAuthority(id: string, rowVersion: number): Promise<void> {
+  await send('DELETE', withQuery(`/api/v1/recommending-authorities/${encodeURIComponent(id)}`, { rowVersion: String(rowVersion) }));
+}
+
+export async function listActionTagSets(): Promise<readonly ActionTagSetRecord[]> {
+  const body = await send('GET', '/api/v1/action-tag-sets');
+  if (!Array.isArray(body) || !body.every(isActionTagSetRecord)) throw unexpectedResponse(200);
+  return body;
+}
+
+export async function updateActionTagSet(
+  id: string,
+  allowedActions: readonly string[],
+  rowVersion: number,
+): Promise<ActionTagSetRecord> {
+  const body = await send('PUT', `/api/v1/action-tag-sets/${encodeURIComponent(id)}`, { allowedActions, rowVersion });
+  if (!isActionTagSetRecord(body)) throw unexpectedResponse(200);
+  return body;
+}

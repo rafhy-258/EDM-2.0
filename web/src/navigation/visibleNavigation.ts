@@ -9,7 +9,13 @@ export function visibleNavigation(
   items: readonly NavItemDef[],
   hasPermission: (permission: Permission | null) => boolean,
 ): NavItemDef[] {
-  return items.filter((item) => item.phase === 'P1' && hasPermission(item.requiredPermission));
+  return items.filter((item) => {
+    if (item.phase !== 'P1') return false;
+    if (item.requiredAnyPermission) {
+      return item.requiredAnyPermission.some((permission) => hasPermission(permission));
+    }
+    return hasPermission(item.requiredPermission);
+  });
 }
 
 export interface NavGroup {

@@ -28,6 +28,7 @@ export interface NavItemDef {
   readonly route: string;
   readonly phase: 'P1' | 'P2';
   readonly requiredPermission: Permission | null;
+  readonly requiredAnyPermission?: readonly Permission[];
 }
 
 export const NAV_AREAS: readonly NavArea[] = [
@@ -76,7 +77,7 @@ export const NAVIGATION: readonly NavItemDef[] = [
   { id: 'categories', area: 'Configuration and Policies', label: 'Categories', route: '/configuration/categories', phase: 'P1', requiredPermission: 'config.category.view' },
   { id: 'subcategories', area: 'Configuration and Policies', label: 'Subcategories', route: '/configuration/subcategories', phase: 'P1', requiredPermission: 'config.subcategory.manage' },
   { id: 'financial-limits', area: 'Configuration and Policies', label: 'Financial Limits', route: '/configuration/financial-limits', phase: 'P1', requiredPermission: 'config.limit.manage' },
-  { id: 'approval-authorities', area: 'Configuration and Policies', label: 'Approval Authorities', route: '/configuration/approval-authorities', phase: 'P1', requiredPermission: 'config.ra.manage' },
+  { id: 'approval-authorities', area: 'Configuration and Policies', label: 'Approval Authorities', route: '/configuration/approval-authorities', phase: 'P1', requiredPermission: null, requiredAnyPermission: ['config.ec.pool.manage', 'config.ra.manage', 'config.actiontags.manage'] },
   { id: 'opex-capex-policies', area: 'Configuration and Policies', label: 'OPEX/CAPEX Policies', route: '/configuration/policies', phase: 'P1', requiredPermission: 'config.policy.view' },
   { id: 'rule-builder', area: 'Configuration and Policies', label: 'Rule Builder', route: '/configuration/rule-builder', phase: 'P2', requiredPermission: 'config.matrix.manage' },
 

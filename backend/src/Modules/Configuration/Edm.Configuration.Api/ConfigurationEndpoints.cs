@@ -160,6 +160,7 @@ public static class ConfigurationEndpoints
 
         group.MapDeptHeadLimitEndpoints();
         group.MapCurrencyEndpoints();
+        group.MapApprovalAuthorityEndpoints();
         return app;
     }
 }

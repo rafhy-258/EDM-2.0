@@ -7,6 +7,8 @@ import {
   listCategories,
   listSubcategories,
   changeCurrencyRate,
+  createRecommendingAuthority,
+  listEcMembers,
   setCurrencyActiveState,
   updateCategory,
   type CategoryRecord,
@@ -118,6 +120,54 @@ describe('configuration API client', () => {
     stubFetch(() => json(200, { unexpected: true }));
 
     await expect(listCategories(false)).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it('loads the EC pool with filters and validates the member response', async () => {
+    const member = {
+      id: 'member-1',
+      userId: 'user-1',
+      employeeId: 'EMP100',
+      userName: 'Alex Khan',
+      departmentId: 'dept-1',
+      departmentName: 'Finance',
+      designation: 'EC_MEMBER',
+      designationLabel: 'EC Member',
+      isActive: true,
+      rowVersion: 1,
+      updatedAtUtc: '2026-11-04T05:00:00Z',
+      updatedBy: null,
+    };
+    const calls = stubFetch(() => json(200, [member]));
+
+    await expect(listEcMembers('EC_MEMBER', true, ' Alex ')).resolves.toEqual([member]);
+    expect(calls[0]?.url).toBe('/api/v1/ec-members?designation=EC_MEMBER&includeInactive=true&search=Alex');
+  });
+
+  it('sends an immutable title with the department and user when creating an authority', async () => {
+    const authority = {
+      id: 'authority-1',
+      title: 'Finance Review',
+      departmentId: 'dept-1',
+      departmentName: 'Finance',
+      userId: 'user-1',
+      employeeId: 'EMP100',
+      userName: 'Alex Khan',
+      defaultActionTagSetId: 'tags-1',
+      actionTagSetName: 'Recommending Authority',
+      isActive: true,
+      rowVersion: 1,
+      updatedAtUtc: '2026-11-04T05:00:00Z',
+      updatedBy: null,
+    };
+    const calls = stubFetch(() => json(201, authority));
+
+    await expect(createRecommendingAuthority({
+      title: 'Finance Review',
+      departmentId: 'dept-1',
+      userId: 'user-1',
+    })).resolves.toEqual(authority);
+    expect(calls[0]?.url).toBe('/api/v1/recommending-authorities');
+    expect(calls[0]?.body).toEqual({ title: 'Finance Review', departmentId: 'dept-1', userId: 'user-1' });
   });
 
   it('sends the row version with a delete and accepts no content', async () => {

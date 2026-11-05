@@ -107,15 +107,19 @@ describe('navigation data (Part 14.1)', () => {
       if (item.requiredPermission !== null) {
         expect(catalogue.has(item.requiredPermission), item.id).toBe(true);
       }
+      for (const permission of item.requiredAnyPermission ?? []) {
+        expect(catalogue.has(permission), `${item.id} alternative`).toBe(true);
+      }
     }
   });
 
   it('makes every Phase 1 screen reachable by at least one role fixture (no orphan screens)', () => {
     const fixtureRoles = ROLE_KEYS.map((role) => new Set<string>(ROLE_PERMISSIONS[role]));
     for (const item of NAVIGATION.filter((i) => i.phase === 'P1')) {
-      if (item.requiredPermission === null) continue;
-      const reachable = fixtureRoles.some((perms) => perms.has(item.requiredPermission as string));
-      expect(reachable, `${item.label} needs ${item.requiredPermission}`).toBe(true);
+      const required = item.requiredAnyPermission ?? (item.requiredPermission ? [item.requiredPermission] : []);
+      if (required.length === 0) continue;
+      const reachable = fixtureRoles.some((perms) => required.some((permission) => perms.has(permission)));
+      expect(reachable, `${item.label} needs one of ${required.join(', ')}`).toBe(true);
     }
   });
 
@@ -143,6 +147,13 @@ describe('visibleNavigation', () => {
     expect(labels).toContain('Overview');
     expect(labels).not.toContain('Users');
     expect(labels).not.toContain('Categories');
+  });
+
+  it('shows Approval Authorities when the session has any module-specific management permission', () => {
+    for (const permission of ['config.ec.pool.manage', 'config.ra.manage', 'config.actiontags.manage']) {
+      const visible = visibleNavigation(NAVIGATION, (candidate) => candidate === permission);
+      expect(visible.map((item) => item.id)).toContain('approval-authorities');
+    }
   });
 
   it('returns nothing except open items when there is no session', () => {

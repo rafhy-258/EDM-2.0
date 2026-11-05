@@ -1,6 +1,7 @@
 using Edm.Configuration.Application.Catalogue;
 using Edm.Configuration.Application.Limits;
 using Edm.Configuration.Application.Currencies;
+using Edm.Configuration.Application.Authorities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Edm.Configuration.Application;
@@ -14,6 +15,7 @@ public static class ConfigurationApplicationServices
         services.AddScoped<SubcategoryService>();
         services.AddScoped<DeptHeadLimitService>();
         services.AddScoped<CurrencyService>();
+        services.AddScoped<ApprovalAuthorityService>();
         return services;
     }
 }

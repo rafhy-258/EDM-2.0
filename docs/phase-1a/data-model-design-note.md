@@ -431,7 +431,7 @@ A missing record returns 404 with no EDM code, because Part 21.3 has no not-foun
 - The bootstrap default roles do not include EDM_ADMINISTRATOR (P0-7, not confirmed). An existing account needs the role added in its database row.
 - Part 24.3 lists currency first. The owner's order put categories first. Currency administration was subsequently implemented in the currency work record below.
 
-**Still to build in Phase 1A:** complete the shared configuration tables and seeds (`settings`, `action_tag_sets`); EC members and recommending authorities (M1A-03); OPEX and CAPEX configuration (EC levels, the delegation matrix) (M1A-04, M1A-05); and policy versions with maker-checker (M1A-06). Currency and rates (M1A-01 currency portion) and department-head financial limits (M1A-04, part) are built below.
+**Still to build in Phase 1A:** `settings`; OPEX and CAPEX configuration (EC levels, the delegation matrix) (M1A-04, M1A-05); and policy versions with maker-checker (M1A-06). Currency and rates, department-head financial limits, EC members, recommending authorities, and the shared action-tag defaults are built below.
 
 ### Slice 2: department-head financial limits (M1A-04, part)
 
@@ -508,3 +508,21 @@ Implemented: migration `0006_configuration_currencies.sql`, tenant-scoped curren
 - The migration seeds PKR for `TenantDefaults.SingleTenant`; the currency service also ensures the protected PKR currency/rate pair for the configured tenant before currency lists and creates.
 - Request-time currency/rate snapshots and the active-currency picker on request forms wait for the request module (Phase 1C).
 - Request/draft usage checks wait for the request tables; rate-history checks are active now.
+
+### Slice 3: EC pool, recommending authorities and action defaults (M1A-03)
+
+Built in this slice: migration `0007_configuration_approval_authorities.sql` (shared `action_tag_sets` defaults, `ec_members`, and `recommending_authorities`), the Configuration domain/application/infrastructure/API and Identity-directory adapter, and the Approval Authorities screen at the existing `/configuration/approval-authorities` route.
+
+**Decisions applied in this slice:**
+- Action-tag sets are seeded idempotently per tenant, including the Phase 1 Department Head `FORWARD` default. The other designations default to Approve, Reject and Revert; `APPROVE` is always required, and `FORWARD` is allowed only for Department Head (never EC Member).
+- Duplicate EC member/designation pairs include inactive rows; reactivate the existing member. Only one active CEO, CFO, or Head of Admin & GST can exist per tenant.
+- Recommending-authority titles are validated and immutable after creation. Department/user membership is checked through the Identity-owned directory port; only active users of active departments can be assigned.
+- Recommending-authority department/user combinations are unique among active, non-deleted rows. All rows are tenant-scoped and use row-version concurrency. Deletion is soft and goes through the configuration usage port.
+- EC pool, authority, and action-default APIs use their separate `config.ec.pool.manage`, `config.ra.manage`, and `config.actiontags.manage` permissions. The existing navigation entry is visible to users holding any one of these permissions.
+
+**Acceptance checks:** `ApprovalAuthorityRulesTests` covers title constraints, whitespace normalization, the required Approve action, and the Forward restriction. The focused web API/navigation tests pass (25 tests), and the backend host compiles with zero warnings. A PostgreSQL integration test covers migration application, directory assignment, duplicate/reactivation behavior, department membership, action defaults, and endpoint permissions; it could not execute in this environment because Docker is unavailable and `EDM_TEST_POSTGRES` is not configured.
+
+**Known gaps (not complete Phase 1A):**
+- Policy versions and maker-checker are deferred to M1A-06; changes are audited and applied immediately.
+- The usage checker remains a no-usages stub until approval rules/levels are built. EC levels and the delegation matrix remain M1A-04/M1A-05.
+- The CEO default is Approve, Reject and Revert; later policy/version work must support the configurable CEO options and V3 EC-stage behavior in Part 4.4.

@@ -6,6 +6,7 @@ import { AuditActivityPage } from '../audit/AuditActivityPage';
 import { CategoriesPage } from '../configuration/CategoriesPage';
 import { SubcategoriesPage } from '../configuration/SubcategoriesPage';
 import { FinancialLimitsPage } from '../configuration/FinancialLimitsPage';
+import { ApprovalAuthoritiesPage } from '../configuration/ApprovalAuthoritiesPage';
 import { DepartmentsPage } from '../organisation/DepartmentsPage';
 import { UsersPage } from '../organisation/UsersPage';
 import { ApiError } from '../api/apiError';
@@ -144,7 +145,10 @@ function AppRoutes({
 /** Route guard. The UI check is cosmetic. The server must still check each request (ADR-0007). */
 function GuardedPage({ item }: { readonly item: NavItemDef }) {
   const { hasPermission } = useSession();
-  if (!hasPermission(item.requiredPermission)) {
+  const permitted = item.requiredAnyPermission
+    ? item.requiredAnyPermission.some((permission) => hasPermission(permission))
+    : hasPermission(item.requiredPermission);
+  if (!permitted) {
     return <NoPermissionState />;
   }
   if (item.id === 'activity-logs') {
@@ -158,6 +162,9 @@ function GuardedPage({ item }: { readonly item: NavItemDef }) {
   }
   if (item.id === 'financial-limits') {
     return <FinancialLimitsPage />;
+  }
+  if (item.id === 'approval-authorities') {
+    return <ApprovalAuthoritiesPage />;
   }
   if (item.id === 'departments') {
     return <DepartmentsPage />;

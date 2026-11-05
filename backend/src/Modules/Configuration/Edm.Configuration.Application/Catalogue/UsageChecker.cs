@@ -6,6 +6,8 @@ public enum ConfigurationEntity
     Category,
     Subcategory,
     Currency,
+    EcMember,
+    RecommendingAuthority,
 }
 
 /// <summary>One place that uses a configuration record, for example an active rule. Shown to the user before a change.</summary>

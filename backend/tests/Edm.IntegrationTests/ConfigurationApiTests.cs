@@ -261,6 +261,86 @@ public sealed class ConfigurationApiTests(PostgresServer server) : IAsyncLifetim
         Assert.Equal("EDM-AUTH-002", response.Body.GetProperty("code").GetString());
     }
 
+    [Fact]
+    public async Task Approval_authority_configuration_uses_directory_and_enforces_membership_rules()
+    {
+        var finance = await Send(HttpMethod.Post, "/api/v1/departments", "org.department.manage", new { name = "Finance" });
+        var operations = await Send(HttpMethod.Post, "/api/v1/departments", "org.department.manage", new { name = "Operations" });
+        Assert.Equal(HttpStatusCode.Created, finance.Status);
+        Assert.Equal(HttpStatusCode.Created, operations.Status);
+        var financeId = finance.Body.GetProperty("id").GetGuid();
+        var operationsId = operations.Body.GetProperty("id").GetGuid();
+
+        var financeUser = await Send(HttpMethod.Post, "/api/v1/users", "org.user.manage", new
+        {
+            employeeId = "EMP9001",
+            name = "Avery Khan",
+            email = (string?)null,
+            departmentId = financeId,
+        });
+        var operationsUser = await Send(HttpMethod.Post, "/api/v1/users", "org.user.manage", new
+        {
+            employeeId = "EMP9002",
+            name = "Sam Lee",
+            email = (string?)null,
+            departmentId = operationsId,
+        });
+        var financeUserId = financeUser.Body.GetProperty("id").GetGuid();
+        var operationsUserId = operationsUser.Body.GetProperty("id").GetGuid();
+
+        var member = await Send(HttpMethod.Post, "/api/v1/ec-members", "config.ec.pool.manage",
+            new { userId = financeUserId, designation = "EC_MEMBER" });
+        Assert.Equal(HttpStatusCode.Created, member.Status);
+        Assert.Equal("Avery Khan", member.Body.GetProperty("userName").GetString());
+
+        var deactivated = await Send(HttpMethod.Put,
+            $"/api/v1/ec-members/{member.Body.GetProperty("id").GetGuid()}",
+            "config.ec.pool.manage",
+            new { isActive = false, rowVersion = 1 });
+        Assert.Equal(HttpStatusCode.OK, deactivated.Status);
+        var duplicate = await Send(HttpMethod.Post, "/api/v1/ec-members", "config.ec.pool.manage",
+            new { userId = financeUserId, designation = "EC_MEMBER" });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, duplicate.Status);
+        Assert.Contains("Reactivate", duplicate.Body.GetProperty("errors").GetProperty("userId").ToString());
+
+        var reactivated = await Send(HttpMethod.Put,
+            $"/api/v1/ec-members/{member.Body.GetProperty("id").GetGuid()}",
+            "config.ec.pool.manage",
+            new { isActive = true, rowVersion = 2 });
+        Assert.Equal(HttpStatusCode.OK, reactivated.Status);
+        Assert.True(reactivated.Body.GetProperty("isActive").GetBoolean());
+
+        var authority = await Send(HttpMethod.Post, "/api/v1/recommending-authorities", "config.ra.manage",
+            new { title = "Finance Review", departmentId = financeId, userId = financeUserId });
+        Assert.Equal(HttpStatusCode.Created, authority.Status);
+        Assert.Equal("Recommending Authority", authority.Body.GetProperty("actionTagSetName").GetString());
+
+        var mismatched = await Send(HttpMethod.Post, "/api/v1/recommending-authorities", "config.ra.manage",
+            new { title = "Operations Review", departmentId = operationsId, userId = financeUserId });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, mismatched.Status);
+        Assert.Contains("belongs to the selected department",
+            mismatched.Body.GetProperty("errors").GetProperty("userId").ToString());
+    }
+
+    [Fact]
+    public async Task Approval_action_defaults_are_seeded_and_enforce_ec_forward_restriction()
+    {
+        var defaults = await Send(HttpMethod.Get, "/api/v1/action-tag-sets", "config.actiontags.manage");
+        Assert.Equal(HttpStatusCode.OK, defaults.Status);
+        var ecDefault = Assert.Single(
+            defaults.Body.EnumerateArray(),
+            item => item.GetProperty("designation").GetString() == "EC_MEMBER");
+
+        var invalid = await Send(HttpMethod.Put,
+            $"/api/v1/action-tag-sets/{ecDefault.GetProperty("id").GetGuid()}",
+            "config.actiontags.manage",
+            new { allowedActions = new[] { "APPROVE", "FORWARD" }, rowVersion = 1 });
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, invalid.Status);
+
+        var forbidden = await Send(HttpMethod.Get, "/api/v1/ec-members", "config.ra.manage");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.Status);
+    }
+
     private async Task<string> CreateCategory(string name)
     {
         var response = await Send(HttpMethod.Post, CategoryUrl, Admin, new { name });
