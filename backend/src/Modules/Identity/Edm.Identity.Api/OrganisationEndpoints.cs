@@ -76,9 +76,9 @@ public static class OrganisationEndpoints
     {
         var group = app.MapGroup("/api/v1").WithTags("Organisation");
 
-        group.MapGet("/departments", async Task<IResult> (bool includeInactive = false, DepartmentService service, CancellationToken cancellationToken) =>
+        group.MapGet("/departments", async Task<IResult> (bool? includeInactive, DepartmentService service, CancellationToken cancellationToken) =>
             {
-                var rows = await service.ListAsync(includeInactive, cancellationToken);
+                var rows = await service.ListAsync(includeInactive ?? false, cancellationToken);
                 return Results.Ok(rows.Select(DepartmentResponse.From).ToArray());
             })
             .RequiresPermission("org.department.manage")
@@ -115,9 +115,9 @@ public static class OrganisationEndpoints
             .WithName("UpdateDepartment")
             .WithSummary("Rename, deactivate or reactivate a department. Needs the current row version.");
 
-        group.MapGet("/users", async Task<IResult> (Guid? departmentId, bool includeInactive = false, DirectoryUserService service, CancellationToken cancellationToken) =>
+        group.MapGet("/users", async Task<IResult> (Guid? departmentId, bool? includeInactive, DirectoryUserService service, CancellationToken cancellationToken) =>
             {
-                var rows = await service.ListAsync(departmentId, includeInactive, cancellationToken);
+                var rows = await service.ListAsync(departmentId, includeInactive ?? false, cancellationToken);
                 return Results.Ok(rows.Select(DirectoryUserResponse.From).ToArray());
             })
             .RequiresPermission("org.user.view")
