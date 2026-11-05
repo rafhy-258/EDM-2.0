@@ -4,7 +4,7 @@ namespace Edm.Identity.Application.Organisation;
 
 public sealed record DepartmentCreate(string? Name);
 
-/// <summary>Null IsActive keeps the current state. RowVersion is the version the user read.</summary>
+/// <summary>Null Name or IsActive keeps the current value. RowVersion is the version the user read.</summary>
 public sealed record DepartmentUpdate(string? Name, bool? IsActive, long RowVersion);
 
 public sealed record DirectoryUserCreate(string? EmployeeId, string? Name, string? Email, Guid? DepartmentId);

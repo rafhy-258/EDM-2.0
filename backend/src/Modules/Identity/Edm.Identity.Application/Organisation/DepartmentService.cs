@@ -66,14 +66,15 @@ public sealed class DepartmentService(
         }
 
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
-        var nameError = OrganisationRules.DepartmentNameError(input.Name);
+        var name = input.Name ?? existing.Name;
+        var nameError = OrganisationRules.DepartmentNameError(name);
         AddError(errors, "name", nameError);
 
         var isActive = input.IsActive ?? existing.IsActive;
         if (nameError is null && isActive)
         {
-            var name = OrganisationRules.NormaliseText(input.Name!);
-            if (await store.DepartmentNameTakenAsync(tenant.TenantId, name, id, cancellationToken))
+            var trimmed = OrganisationRules.NormaliseText(name);
+            if (await store.DepartmentNameTakenAsync(tenant.TenantId, trimmed, id, cancellationToken))
             {
                 AddError(errors, "name", DuplicateMessage);
             }
@@ -94,7 +95,7 @@ public sealed class DepartmentService(
 
         var updated = existing with
         {
-            Name = OrganisationRules.NormaliseText(input.Name!),
+            Name = OrganisationRules.NormaliseText(name),
             IsActive = isActive,
             RowVersion = existing.RowVersion + 1,
             UpdatedAtUtc = clock.UtcNow,
