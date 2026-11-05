@@ -431,4 +431,54 @@ A missing record returns 404 with no EDM code, because Part 21.3 has no not-foun
 - The bootstrap default roles do not include EDM_ADMINISTRATOR (P0-7, not confirmed). An existing account needs the role added in its database row.
 - Part 24.3 lists currency first. The owner's order puts categories first. This slice follows the owner's order. Currency (M1A-01) is the next slice unless the owner says otherwise.
 
-**Still to build in Phase 1A (not started):** currencies and rates (M1A-01), EC members and recommending authorities (M1A-03), OPEX and CAPEX configuration including financial limits and the delegation matrix (M1A-04, M1A-05), and policy versions with maker-checker (M1A-06). Each gets its own checklist when it is built.
+**Still to build in Phase 1A (not started):** currencies and rates (M1A-01), EC members and recommending authorities (M1A-03), OPEX and CAPEX configuration (EC levels, the delegation matrix) (M1A-04, M1A-05). Financial limits (M1A-04, part) are built in slice 2 below, and policy versions with maker-checker (M1A-06). Each gets its own checklist when it is built.
+
+### Slice 2: department-head financial limits (M1A-04, part)
+
+Built in this slice: migration `0005_configuration_dept_head_limits.sql` (tables `opex_dept_head_limits` and `capex_dept_head_limits`, section 3.1, with the same shape for CAPEX), the Limits code in the Configuration module (Domain, Application, Infrastructure, Api), the Financial Limits screen with OPEX and CAPEX tabs, and the tests listed in 13.4.
+
+**Decisions applied in this slice:**
+- One PKR limit per nature. OPEX and CAPEX are separate (owner decision on open item 6, the approved default).
+- At most one active row per nature and tenant. A unique partial index enforces it. A save closes the active row with `effective_to` set to the new effective date, then inserts the new row. Nothing is deleted.
+- The seeded default is `DefaultDeptHeadLimitPkr` = 20,000 (approved 1A-1). It applies while no row is in effect. It is a code constant until the `settings` table exists (section 2.8).
+- A saved amount must be greater than zero (1A-2), at most two decimals, below 10^16 (the column limit), and paired with a description of at most 500 characters.
+- The effective date is a Karachi (UTC+5) calendar date. It cannot be in the past, and cannot be earlier than the start date of the active row. It is stored as Karachi midnight.
+- Status: an open row that has started is **Active**. An open row that starts later is **Scheduled**, and the previous limit (or the default) still applies until then. No open row is **Default**.
+- Concurrency: a save sends the `rowVersion` of the open row. No open row means no version is sent. A mismatch returns EDM-CONC-001 (412). So does a race that breaks the unique index.
+- Deactivate closes the open row at `max(now, its start)`. The default then applies.
+- Every change writes an audit event with the old and new values. A save writes two: `Replaced` (the closed row) and `Created` (the new row). Deactivation writes `Deactivated`.
+- Changes apply as soon as they are saved. **Deviation:** the spec (5.0) requires maker-checker for limits, and policy versions (4.8, M1A-06) are not built. The screen says so. This is a known gap, not a choice, and it must be closed before go-live.
+
+**13.3 Endpoints**
+
+| Method and route | Permission | Notes |
+|---|---|---|
+| GET `/api/v1/dept-head-limits?nature=OPEX\|CAPEX` | `config.limit.manage` | Current amount, status, last change, the open row and the history. No view-only permission exists in the catalogue. |
+| POST `/api/v1/dept-head-limits` | `config.limit.manage` | Body: nature, amountPkr, description, effectiveDate, rowVersion. Returns 201. |
+| POST `/api/v1/dept-head-limits/deactivate` | `config.limit.manage` | Body: nature, rowVersion. Returns 204, or 404 when no limit is active. |
+
+**13.4 Acceptance checklist (slice 2)**
+
+| # | Check | Test |
+|---|---|---|
+| 1 | Amount required, greater than zero, at most two decimals | `DeptHeadLimitRulesTests` (`A_missing_amount_is_refused`, `Zero_and_negative_amounts_are_refused`, `Positive_amounts_with_at_most_two_decimals_are_accepted`, `Three_decimals_are_refused`); `DeptHeadLimitApiTests.Zero_and_three_decimal_amounts_are_field_errors_on_the_amount`; `FinancialLimitsPage.test.tsx` (zero and three decimals refused before sending) |
+| 2 | Description optional, at most 500 characters | `DeptHeadLimitRulesTests.A_description_over_500_characters_is_refused`; `DeptHeadLimitServiceTests.A_description_is_trimmed_and_blank_becomes_null` |
+| 3 | One active limit per nature; a change closes the previous row and keeps it | `DeptHeadLimitServiceTests.Saving_a_new_limit_ends_the_active_one_and_keeps_it_as_history`; `DeptHeadLimitApiTests.Changing_the_limit_keeps_the_old_one_as_history` |
+| 4 | Effective date is a Karachi date; not in the past; not earlier than the current limit's start | `DeptHeadLimitRulesTests.The_start_of_an_effective_date_is_midnight_in_karachi`; `DeptHeadLimitServiceTests.The_effective_date_starts_at_midnight_in_karachi_stored_in_utc`, `A_past_effective_date_is_refused`, `An_effective_date_before_the_current_limit_start_is_refused`; `DeptHeadLimitApiTests.A_past_effective_date_is_a_field_error_on_the_date` |
+| 5 | Default 20,000 while no active limit exists | `DeptHeadLimitServiceTests.With_no_limit_the_seeded_default_applies_and_nothing_is_stored`; `DeptHeadLimitRulesTests.With_no_rows_the_status_is_default_and_nothing_was_changed` |
+| 6 | Scheduled limit does not replace the one in effect until its start | `DeptHeadLimitRulesTests.A_scheduled_row_does_not_replace_the_one_in_effect_until_its_start`, `The_scheduled_row_takes_over_at_its_start`; `DeptHeadLimitApiTests.A_limit_dated_tomorrow_is_scheduled_and_the_default_still_applies` |
+| 7 | Deactivate closes the open row; the default applies after | `DeptHeadLimitServiceTests.Deactivating_ends_the_limit_now_and_the_default_applies_again`, `Deactivating_with_no_active_limit_returns_false`; `DeptHeadLimitApiTests.Deactivating_ends_the_limit_and_a_second_deactivate_finds_nothing` |
+| 8 | Stale row version returns EDM-CONC-001 (412) | `DeptHeadLimitServiceTests.A_stale_version_is_refused_and_nothing_changes`, `Deactivating_with_a_stale_version_is_refused`; `DeptHeadLimitApiTests.A_save_over_a_changed_limit_is_refused_with_412` |
+| 9 | Every change writes audit with old and new values | `DeptHeadLimitServiceTests.The_audit_events_carry_the_old_and_new_values`; `DeptHeadLimitApiTests.Each_change_is_in_the_audit_viewer_with_its_values` |
+| 10 | Permission `config.limit.manage` is required for read and write | `DeptHeadLimitApiTests.A_user_without_config_limit_manage_is_refused`; the audit test that every endpoint declares a known permission (existing) |
+| 11 | OPEX and CAPEX are independent | `DeptHeadLimitServiceTests.OPEX_and_CAPEX_limits_are_independent`; `DeptHeadLimitApiTests.OPEX_and_CAPEX_limits_do_not_affect_each_other` |
+| 12 | Screen: cards, status filter by tab, history, set-limit dialog, end-limit confirmation, field and server errors, stale-version message, no change buttons without the permission | `FinancialLimitsPage.test.tsx` (10 tests); `deptHeadLimit.test.ts` (API client and validation) |
+| 13 | Route B boundary: exactly at the limit goes to the Department Head only; one paisa above goes to the matrix | **Not verified in this slice.** Routing is Phase 1C. This slice stores the limit and does not route requests. |
+
+**Known gaps (slice 2), each tracked:**
+- Maker-checker for limit changes (5.0) and policy versions (4.8) wait for M1A-06. Until then, changes apply straight away. The screen says so.
+- The default is a code constant, not a row in `settings`.
+- The Route B boundary check (item 13) waits for routing (1C).
+- Currency (M1A-01) is still open: the owner has not decided its position in the order.
+
+**Verification record (slice 2):** pending CI. Web checks in the sandbox: typecheck, lint, 121 tests in 21 files, and the production build passed. The backend cannot be compiled in the sandbox (no .NET SDK). The backend C# was parse-checked with tree-sitter (89 files, no errors) and reviewed by reading. The backend CI result will be recorded here once it has run.

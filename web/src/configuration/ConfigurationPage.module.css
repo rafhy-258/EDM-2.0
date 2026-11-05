@@ -42,3 +42,29 @@
 .error {
   color: var(--colorPaletteRedForeground1);
 }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--colorNeutralStroke2);
+  border-radius: var(--borderRadiusMedium);
+  background: var(--colorNeutralBackground1);
+}
+
+.cardValue {
+  font-size: var(--fontSizeHero700);
+  font-weight: var(--fontWeightSemibold);
+  line-height: 1.2;
+}
+
+.muted {
+  color: var(--colorNeutralForeground3);
+}

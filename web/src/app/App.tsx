@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuditActivityPage } from '../audit/AuditActivityPage';
 import { CategoriesPage } from '../configuration/CategoriesPage';
 import { SubcategoriesPage } from '../configuration/SubcategoriesPage';
+import { FinancialLimitsPage } from '../configuration/FinancialLimitsPage';
 import { ApiError } from '../api/apiError';
 import { AppShell, type DevRoleControl } from '../components/AppShell';
 import { ErrorState, LoadingState, NoPermissionState } from '../components/StateViews';
@@ -150,6 +151,9 @@ function GuardedPage({ item }: { readonly item: NavItemDef }) {
   }
   if (item.id === 'subcategories') {
     return <SubcategoriesPage />;
+  }
+  if (item.id === 'financial-limits') {
+    return <FinancialLimitsPage />;
   }
   return <PlaceholderPage item={item} />;
 }

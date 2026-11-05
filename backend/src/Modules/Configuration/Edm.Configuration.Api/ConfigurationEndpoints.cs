@@ -158,6 +158,8 @@ public static class ConfigurationEndpoints
             .WithName("DeleteSubcategory")
             .WithSummary("Delete a subcategory. Refused while it is used.");
 
+        group.MapDeptHeadLimitEndpoints();
+
         return app;
     }
 }

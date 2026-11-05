@@ -186,3 +186,95 @@ export async function updateSubcategory(id: string, input: SubcategoryChangeInpu
 export async function deleteSubcategory(id: string, rowVersion: number): Promise<void> {
   await send('DELETE', withQuery(`/api/v1/subcategories/${encodeURIComponent(id)}`, { rowVersion: String(rowVersion) }));
 }
+
+/** OPEX and CAPEX each have their own department-head limit (Master Prompt 5.5). */
+export type LimitNature = 'OPEX' | 'CAPEX';
+
+/** One limit row (backend DeptHeadLimitResponse). Rows are kept as history; the active row has no end date. */
+export interface DeptHeadLimitRecord {
+  readonly id: string;
+  readonly nature: LimitNature;
+  readonly amountPkr: number;
+  readonly description: string | null;
+  readonly effectiveFrom: string;
+  readonly effectiveTo: string | null;
+  readonly isActive: boolean;
+  readonly rowVersion: number;
+  readonly updatedAtUtc: string;
+  readonly updatedBy: string | null;
+}
+
+/** What applies now for one nature (backend DeptHeadLimitSummaryResponse). */
+export interface DeptHeadLimitSummary {
+  readonly nature: LimitNature;
+  readonly currentAmountPkr: number;
+  readonly isDefault: boolean;
+  readonly status: 'Active' | 'Scheduled' | 'Default';
+  readonly defaultAmountPkr: number;
+  readonly active: DeptHeadLimitRecord | null;
+  readonly lastChangedAtUtc: string | null;
+  readonly history: readonly DeptHeadLimitRecord[];
+}
+
+/**
+ * Set a new limit. effectiveDate is yyyy-MM-dd in Asia/Karachi. rowVersion is the version of the active limit the user
+ * read, or null when none is active. A save over a changed limit is refused (EDM-CONC-001).
+ */
+export interface DeptHeadLimitSaveInput {
+  readonly nature: LimitNature;
+  readonly amountPkr: number;
+  readonly description: string | null;
+  readonly effectiveDate: string;
+  readonly rowVersion: number | null;
+}
+
+function isDeptHeadLimitRecord(value: unknown): value is DeptHeadLimitRecord {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    (value['nature'] === 'OPEX' || value['nature'] === 'CAPEX') &&
+    typeof value['amountPkr'] === 'number' &&
+    (typeof value['description'] === 'string' || value['description'] === null) &&
+    typeof value['effectiveFrom'] === 'string' &&
+    (typeof value['effectiveTo'] === 'string' || value['effectiveTo'] === null) &&
+    typeof value['isActive'] === 'boolean' &&
+    typeof value['rowVersion'] === 'number' &&
+    typeof value['updatedAtUtc'] === 'string'
+  );
+}
+
+function isDeptHeadLimitSummary(value: unknown): value is DeptHeadLimitSummary {
+  return (
+    isRecord(value) &&
+    (value['nature'] === 'OPEX' || value['nature'] === 'CAPEX') &&
+    typeof value['currentAmountPkr'] === 'number' &&
+    typeof value['isDefault'] === 'boolean' &&
+    (value['status'] === 'Active' || value['status'] === 'Scheduled' || value['status'] === 'Default') &&
+    typeof value['defaultAmountPkr'] === 'number' &&
+    (value['active'] === null || isDeptHeadLimitRecord(value['active'])) &&
+    (typeof value['lastChangedAtUtc'] === 'string' || value['lastChangedAtUtc'] === null) &&
+    Array.isArray(value['history']) &&
+    value['history'].every(isDeptHeadLimitRecord)
+  );
+}
+
+export async function getDeptHeadLimit(nature: LimitNature): Promise<DeptHeadLimitSummary> {
+  const body = await send('GET', withQuery('/api/v1/dept-head-limits', { nature }));
+  if (!isDeptHeadLimitSummary(body)) {
+    throw unexpectedResponse(200);
+  }
+  return body;
+}
+
+export async function saveDeptHeadLimit(input: DeptHeadLimitSaveInput): Promise<DeptHeadLimitRecord> {
+  const body = await send('POST', '/api/v1/dept-head-limits', input);
+  if (!isDeptHeadLimitRecord(body)) {
+    throw unexpectedResponse(201);
+  }
+  return body;
+}
+
+/** Ends the active limit now. The seeded default applies until a new limit is set. */
+export async function deactivateDeptHeadLimit(nature: LimitNature, rowVersion: number): Promise<void> {
+  await send('POST', '/api/v1/dept-head-limits/deactivate', { nature, rowVersion });
+}
